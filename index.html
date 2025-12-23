@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>Miner Machine HTML5</title>
+    <style>
+        body {
+            background-color: #222;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            background-color: #000;
+            /* MSX:n resoluutio on yleensä 256x192. 
+               Skaalataan se 2x isommaksi, jotta näkyy nykynäytöillä. */
+            width: 512px; 
+            height: 384px;
+            image-rendering: pixelated; /* Pitää pikselit terävinä */
+            border: 2px solid #666;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="256" height="192"></canvas>
+    
+    <script src="src/game.js"></script>
+</body>
+</html>
