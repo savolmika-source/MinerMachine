@@ -654,7 +654,7 @@ function tryPushStone(targetPixelX, targetPixelY, pushDx, pushDy) {
         if (!checkCollisionForStone(destTx, destTy) && !checkCollisionForStone(destTx + (pushDx?0:1), destTy + (pushDy?0:1))) {
             map[stoneTy][stoneTx] = TILE_EMPTY; map[stoneTy][stoneTx+1] = TILE_EMPTY;
             map[stoneTy+1][stoneTx] = TILE_EMPTY; map[stoneTy+1][stoneTx+1] = TILE_EMPTY;
-            movingStones.push({ x: stoneTx * TILE_SIZE, y: stoneTy * TILE_SIZE, vx: Math.sign(pushDx) * 2, vy: Math.sign(pushDy) * 2 });
+            movingStones.push({ x: stoneTx * TILE_SIZE, y: stoneTy * TILE_SIZE, vx: Math.sign(pushDx) * 4, vy: Math.sign(pushDy) * 4 });
             player.moveLockTimer = 10; 
         }
     }
