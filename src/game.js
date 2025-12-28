@@ -7,8 +7,8 @@ console.log("--- VERSION: PERSONAL BEST EDITION ---");
 const SCREEN_WIDTH = 512;
 const SCREEN_HEIGHT = 384;
 const TILE_SIZE = 16;  
-const ROOMS_PER_CAVE = 25; 
-const MAX_LEVELS = 50; 
+const ROOMS_PER_CAVE = 5; 
+const MAX_LEVELS = 5; 
 const HIGH_SCORE_KEY = 'minerMachineHighScores_v1'; 
 
 // --- TILE ID:t ---
