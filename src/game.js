@@ -7,8 +7,8 @@ console.log("--- VERSION: PERSONAL BEST EDITION ---");
 const SCREEN_WIDTH = 512;
 const SCREEN_HEIGHT = 384;
 const TILE_SIZE = 16;  
-const ROOMS_PER_CAVE = 5; 
-const MAX_LEVELS = 5; 
+const ROOMS_PER_CAVE = 10 
+const MAX_LEVELS = 10 
 const HIGH_SCORE_KEY = 'minerMachineHighScores_v1'; 
 
 // --- TILE ID:t ---
@@ -22,7 +22,7 @@ const SPRITE_ENEMY = 4;
 const SPRITE_EXPLOSION_1 = 5;
 
 // --- MUUTTUJAT ---
-let currentLevel = 0 //alusta alkaen 0
+let currentLevel = 9 //alusta alkaen 0
 let movingStones = []; 
 let explosions = [];
 let score = 0; 
@@ -171,6 +171,71 @@ const COMPACT_LEVELS = [
         "#$O...O.O.BB.O.#",
         "#$O.B...O.BB.O.#",
         "#$O.B.O.O.OO.OP#",
+        "################"
+    ],
+    // ROOM 06
+    [
+        "#..BE....BBOBE$#",
+        "#...BBBBBBO.B..#",
+        "#...OOOOOO..BBB#",
+        "#.$.O....OOO..B#",
+        "#...O.$$.OBBBBB#",
+        "#...O..EEOBBO..#",
+        "#..EOOOOOO...OE#",
+        "#.BB$BO..BBBOOO#",
+        "#B......E...OOP#",
+        "################"
+    ],
+    // ROOM 07
+    [
+        "#BBBBBO.B.E.$$$#",
+        "#B.B.EB.OOOOOO.#",
+        "#B.BOE.......OE#",
+        "#BEBOBBBBBBB.O.#",
+        "#B.BOBOBO..OBBB#",
+        "#BBBO.BBBBBBBOO#",
+        "#B.BOEBBBBBBBBE#",
+        "#B.BO.BBE...BB.#",
+        "#BPBO$BBBBBBBO$#",
+        "################"
+    ],
+    // ROOM 08
+    [
+        "#BBOBBBOBBOOB.$#",
+        "#..E...$B.$OB.B#",
+        "#.BBBBBO..OOB.B#",
+        "#.B...BB.BBBE.B#",
+        "#.BPB...EBBBBBB#",
+        "#.B.B.OOBOB...E#",
+        "#$..B.$OBBB.BB.#",
+        "#OOBB.OBBB..B..#",
+        "#$....BBO$E...$#",
+        "################"
+    ],
+    // ROOM 09
+    [
+        "#....O...BB...O#",
+        "#.P..O.OEOB.B.O#",
+        "#....B.OBBB.B.B#",
+        "#.BB.B..B.B.B.O#",
+        "#....BOBB.B.BEB#",
+        "#BBBBBBBB.BEB.B#",
+        "#OEB.....E.....#",
+        "#BOBBBOBBBB.$$$#",
+        "#OOOB...EE..$$$#",
+        "################"
+    ],
+    // ROOM 10
+    [
+        "#O.EBO.O.O.O$$$#",
+        "#BBOO.OEE.OBO..#",
+        "#BOOBO.O...O.OE#",
+        "#B...OOOOOO.O.B#",
+        "#.EO.O..O.BOO.O#",
+        "#OOO.O.POOO.OB.#",
+        "#...OOOOOO.O..E#",
+        "#.O.B...O.O..O.#",
+        "#OOOOOO.OE.O..O#",
         "################"
     ],
 ];
