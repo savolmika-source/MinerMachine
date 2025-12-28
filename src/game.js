@@ -22,7 +22,7 @@ const SPRITE_ENEMY = 4;
 const SPRITE_EXPLOSION_1 = 5;
 
 // --- MUUTTUJAT ---
-let currentLevel = 9 //alusta alkaen 0
+let currentLevel = 0 //alusta alkaen 0
 let movingStones = []; 
 let explosions = [];
 let score = 0; 
