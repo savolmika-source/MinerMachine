@@ -1,12 +1,15 @@
 // ==========================================
-// MINER MACHINE - GAME.JS (FINAL FIXED v8 - 32px SNAP)
+// MINER MACHINE - GAME.JS (PERSONAL BEST EDITION)
 // ==========================================
-console.log("--- VERSION: FINAL FIXED v8 ---"); 
+console.log("--- VERSION: PERSONAL BEST EDITION ---"); 
 
 // --- ASETUKSET ---
 const SCREEN_WIDTH = 512;
 const SCREEN_HEIGHT = 384;
 const TILE_SIZE = 16;  
+const ROOMS_PER_CAVE = 25; 
+const MAX_LEVELS = 50; 
+const HIGH_SCORE_KEY = 'minerMachineHighScores_v1'; 
 
 // --- TILE ID:t ---
 const TILE_EMPTY = 32; 
@@ -19,6 +22,7 @@ const SPRITE_ENEMY = 4;
 const SPRITE_EXPLOSION_1 = 5;
 
 // --- MUUTTUJAT ---
+let currentLevel = 0 //alusta alkaen 0
 let movingStones = []; 
 let explosions = [];
 let score = 0; 
@@ -27,13 +31,18 @@ let gameTime = INITIAL_TIME;
 let timeAccumulator = 0; 
 let lives = 5;       
 let goldRemaining = 0; 
-let isGameOver = false; 
-let playerDeathTimer = 0; 
-let isLevelClearBonus = false; 
-let bonusFrameCount = 0; 
-let isLevelCompleted = false; 
 
-// --- PELIN TILA ---
+// Pelitilat
+let isGameOver = false; 
+let isGameWon = false;      
+let isLevelCompleted = false; 
+let isLevelClearBonus = false; 
+let isHighScores = false;   
+
+let playerDeathTimer = 0; 
+let bonusFrameCount = 0; 
+
+// --- KARTTA JA PELAAJA ---
 let map = [];
 let keys = {}; 
 let lastTime = 0; 
@@ -50,6 +59,7 @@ let player = {
 
 let enemies = [];
 
+// --- KUVIEN LATAUS ---
 const tileset = new Image();
 const spriteset = new Image();
 let imagesLoaded = 0;
@@ -60,8 +70,6 @@ window.onload = function() {
     
     canvas.width = SCREEN_WIDTH;
     canvas.height = SCREEN_HEIGHT;
-
-    // Terävyys
     canvas.style.imageRendering = "pixelated"; 
     ctx.imageSmoothingEnabled = false;
 
@@ -83,33 +91,115 @@ window.onload = function() {
     window.addEventListener('keyup', e => keys[e.code] = false);
 };
 
-// --- KENTTÄDATA ---
-const LEVEL_1_LAYOUT = [
-    "................................", 
-    "################################", 
-    "#..............................#", 
-    "################################", 
-    "##......O.BB$.BBO.O.BBBB..O...##", 
-    "##........BB..BB....BBBB......##", 
-    "##....O.E.O...O.BB........BB..##", 
-    "##..............BB........BB..##", 
-    "##$.O.....BB..E.BB......BBBB..##", 
-    "##........BB....BB......BBBB..##", 
-    "##O.O.O.O.BBO.BBBB..O.O...BB..##", 
-    "##........BB..BBBB........BB..##", 
-    "##BBBBBBBB$.P...O.....BBBBBB..##", 
-    "##BBBBBBBB............BBBBBB..##", 
-    "##......BB..BBO.BBBB....O.E...##", 
-    "##......BB..BB..BBBB..........##", 
-    "##$...O...O.....BB..O...BB....##", 
-    "##..............BB......BB....##", 
-    "##....E.....BBBB........BB$.E.##", 
-    "##..........BBBB........BB....##", 
-    "##BBBB....$...O.BB....BBO.BBBB##", 
-    "##BBBB..........BB....BB..BBBB##", 
-    "################################", 
+// =============================================================
+// KENTTÄDATA (16x10 FORMATTI)
+// =============================================================
+const LEVEL_HEADER = [
+    "................................",
+    "################################",
+    "#..............................#",
     "################################"
 ];
+
+// --- KENTTÄDATA (16x10) ---
+const COMPACT_LEVELS = [
+    // ==========================================
+    // CAVE 1 (Huoneet 1 - 25)
+    // ==========================================
+
+    // ROOM 01
+    [
+        "#...OB$BOOBB.O.#",
+        "#..OEO.OB....B.#",
+        "#$O..B.EB...BB.#",
+        "#OOOOBOBB.OO.B.#",
+        "#BBBB$P.O..BBB.#",
+        "#...B.BOBB..OE.#",
+        "#$.O.O..B.O.B..#",
+        "#..E..BB....B$E#",
+        "#BB..$.OB..BOBB#",
+        "################"
+    ],
+    // ROOM 02
+    [
+        "#$...BBOBBBB.E$#",
+        "#.BEB.BBBO.B.B.#",
+        "#EB.OOO....O.B.#",
+        "#O$OBBOBBOBB.B.#",
+        "#BBOBBBBPBBO.B.#",
+        "#BBBBOBBBOBOBB.#",
+        "#BBBOOBBBOBOOO.#",
+        "#.EOO$OBBB..E..#",
+        "#$EBBBBBOBEBE.$#",
+        "################"
+    ],
+
+    // ROOM 03
+    [
+        "#.......OBBBE..#",
+        "#OOOO.O.OOOO.O.#",
+        "#..0.E0...E0.0.#",
+        "#OEB..OOOO.O.O.#",
+        "#.....B$$OEO.O.#",
+        "#OBOOOO$$O.O.O.#",
+        "#.BPB.O$$OE..O.#",
+        "#.B.BOOEEOOBB..#",
+        "#...BOO.....B..#",
+        "################"
+    ],
+    // ROOM 04
+    [
+        "#........BBO...#",
+        "#.EBEO.O.BO...E#",
+        "#B......O..OOO.#",
+        "#.OO.B..OBBO..E#",
+        "#..PO....B...BO#",
+        "#O..O.BBBB.OOO.#",
+        "#..OOEOB.B.O$.E#",
+        "#.B.B....BOB..E#",
+        "#BO.B...E..O...#",
+        "################"
+    ],
+    // ROOM 05
+    [
+        "#EE.EE.EB.OBBBB#",
+        "#$OBBBBBB..O..B#",
+        "#$O.OOOOO.OOO.B#",
+        "#$O.O.O.B.....B#",
+        "#$O.OEE.O.OO...#",
+        "#$O.O.O.O.BB.O.#",
+        "#$O...O.O.BB.O.#",
+        "#$O.B...O.BB.O.#",
+        "#$O.B.O.O.OO.OP#",
+        "################"
+    ],
+];
+
+function expandLevelData(compactData) {
+    let expandedMap = [...LEVEL_HEADER];
+    for (let row of compactData) {
+        if (row.length < 16) row = row.padEnd(16, '.');
+        if (row.length > 16) row = row.substring(0, 16);
+
+        let lineTop = "";
+        let lineBottom = "";
+        for (let char of row) {
+            if (char === '#' || char === 'B') {
+                lineTop    += char + char;
+                lineBottom += char + char;
+            } else if (['P', 'E', 'O', '$'].includes(char)) {
+                lineTop    += char + ".";
+                lineBottom += "..";
+            } else {
+                lineTop    += "..";
+                lineBottom += "..";
+            }
+        }
+        expandedMap.push(lineTop);
+        expandedMap.push(lineBottom);
+    }
+    return expandedMap;
+}
 
 // --- ÄÄNIMOOTTORI ---
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -134,16 +224,14 @@ function playSound(type) {
         gain2.gain.setValueAtTime(0, now); gain2.gain.linearRampToValueAtTime(0.1, now + 0.05); 
         gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
         osc2.start(now); osc2.stop(now + 0.6);
-    } 
-    else if (type === 'score') {
+    } else if (type === 'score') {
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         osc.connect(gainNode); gainNode.connect(audioCtx.destination);
         osc.type = 'triangle'; osc.frequency.setValueAtTime(600, now); 
         gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1); 
         osc.start(now); osc.stop(now + 0.1);
-    }
-    else if (type === 'dig') {
+    } else if (type === 'dig') {
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         osc.connect(gainNode); gainNode.connect(audioCtx.destination);
@@ -151,8 +239,7 @@ function playSound(type) {
         osc.frequency.exponentialRampToValueAtTime(40, now + 0.05);
         gainNode.gain.setValueAtTime(0.1, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
         osc.start(now); osc.stop(now + 0.05);
-    } 
-    else if (type === 'explosion') {
+    } else if (type === 'explosion') {
         const osc1 = audioCtx.createOscillator();
         const gain1 = audioCtx.createGain();
         osc1.connect(gain1); gain1.connect(audioCtx.destination);
@@ -176,16 +263,24 @@ function playSound(type) {
 function initGame() {
     isLevelCompleted = false; 
     isLevelClearBonus = false; 
+    isHighScores = false; 
     enemies = [];
     goldRemaining = 0; 
     isGameOver = false;
     bonusFrameCount = 0;
     
+    if (currentLevel >= MAX_LEVELS || currentLevel >= COMPACT_LEVELS.length) {
+        handleGameWon();
+        return;
+    }
+
     map = new Array(24).fill(0).map(() => new Array(32).fill(TILE_EMPTY));
+    const compactData = COMPACT_LEVELS[currentLevel];
+    const currentLayout = expandLevelData(compactData);
 
     for (let y = 0; y < 24; y++) {
-        if (!LEVEL_1_LAYOUT[y]) continue;
-        const rowString = LEVEL_1_LAYOUT[y];
+        if (!currentLayout[y]) continue;
+        const rowString = currentLayout[y];
         
         for (let x = 0; x < 32; x++) {
             if (x >= rowString.length) break;
@@ -220,30 +315,86 @@ function initGame() {
     }
 }
 
+function handleGameWon() {
+    isGameWon = true;
+    score += 5000; 
+    playSound('score'); 
+    console.log("GAME WON! Bonus 5000 added.");
+}
+
+// --- HIGH SCORE LOGIIKKA ---
+
+function checkAndSaveHighScore() {
+    // 1. Haetaan vanhat pisteet muistista
+    let savedScores = localStorage.getItem(HIGH_SCORE_KEY);
+    let scores = savedScores ? JSON.parse(savedScores) : [];
+
+    // 2. Tarkistetaan mahtuuko listalle (Top 10 tai lista on vajaa)
+    if (scores.length < 10 || score > scores[scores.length - 1].score) {
+        
+        setTimeout(() => {
+            let name = prompt("NEW PERSONAL BEST! Enter your name:", "PLAYER");
+            
+            if (!name) name = "UNKNOWN";
+            name = name.substring(0, 10).toUpperCase();
+
+            scores.push({ name: name, score: score });
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 10);
+
+            localStorage.setItem(HIGH_SCORE_KEY, JSON.stringify(scores));
+        }, 100);
+    }
+}
+
 function gameLoop(timestamp, ctx) {
     const deltaTime = timestamp - lastTime;
     lastTime = timestamp;
-
     if (Math.floor(timestamp / 200) % 2 === 0) globalFrame = 0; else globalFrame = 1;
-
     update(deltaTime);
     draw(ctx);
     requestAnimationFrame((ts) => gameLoop(ts, ctx));
 }
 
 function update(deltaTime) {
-    if (isGameOver || isLevelCompleted) {
+    // TILAT: GAMEOVER, VOITTO tai LEVEL CLEAR
+    if (isGameOver || isLevelCompleted || isGameWon || isHighScores) {
         if (keys['Enter']) { 
-             lives = 5; score = 0; gameTime = INITIAL_TIME; initGame();
+             keys['Enter'] = false; // Estä rämpytys
+             
+             // 1. Jos ollaan HIGH SCORE -ruudussa -> Aloita peli alusta
+             if (isHighScores) {
+                 lives = 5; score = 0; currentLevel = 0; 
+                 isHighScores = false;
+                 isGameOver = false;
+                 isGameWon = false;
+                 initGame();
+                 return;
+             }
+
+             // 2. Jos peli päättyi (Voitto tai Häviö) -> Mene High Score -listalle
+             if (isGameOver || isGameWon) {
+                 checkAndSaveHighScore(); 
+                 isHighScores = true;     
+                 return;
+             }
+
+             // 3. Jos vain tason läpäisy -> Seuraava taso
+             if (isLevelCompleted) {
+                 currentLevel++;
+                 gameTime = INITIAL_TIME; 
+                 initGame();
+             }
         }
         return;
     }
 
+    // BONUSLASKENTA
     if (isLevelClearBonus) {
         if (gameTime > 0) {
-            gameTime -= 5; 
+            gameTime -= 10; 
             if (gameTime < 0) gameTime = 0;
-            score += 10; 
+            score += 1;     
             bonusFrameCount++;
             if (bonusFrameCount % 4 === 0) playSound('score'); 
         } else {
@@ -253,6 +404,7 @@ function update(deltaTime) {
         return; 
     }
 
+    // KUOLEMA
     if (playerDeathTimer > 0) {
         playerDeathTimer--; 
         for (let i = explosions.length - 1; i >= 0; i--) {
@@ -272,6 +424,7 @@ function update(deltaTime) {
         return; 
     }
 
+    // AIKA
     timeAccumulator += deltaTime;
     if (timeAccumulator >= 100) { 
         gameTime--;
@@ -282,7 +435,7 @@ function update(deltaTime) {
         }
     }
 
-    // Räjähdykset
+    // RÄJÄHDYKSET
     for (let i = explosions.length - 1; i >= 0; i--) {
         let exp = explosions[i];
         exp.timer++;
@@ -293,7 +446,7 @@ function update(deltaTime) {
         }
     }
 
-    // Kivet
+    // KIVET
     for (let i = movingStones.length - 1; i >= 0; i--) {
         let stone = movingStones[i];
         stone.x += stone.vx;
@@ -309,10 +462,8 @@ function update(deltaTime) {
                 playSound('explosion');
                 explosions.push({ x: enemy.x, y: enemy.y, frame: 0, timer: 0 });
                 enemies.splice(e, 1); 
-                
                 stone.x = Math.round(stone.x / 32) * 32;
                 stone.y = Math.round(stone.y / 32) * 32;
-
                 placeBigTileObject(stone.x / TILE_SIZE, stone.y / TILE_SIZE, 128);
                 movingStones.splice(i, 1);
                 stoneStopped = true;
@@ -320,14 +471,12 @@ function update(deltaTime) {
             }
         }
         if (stoneStopped) continue;
-
         if (stone.x % 16 === 0 && stone.y % 16 === 0) {
             let tx = stone.x / TILE_SIZE;
             let ty = stone.y / TILE_SIZE;
             let nextTx = tx; let nextTy = ty;
             if (stone.vx > 0) nextTx += 2; else if (stone.vx < 0) nextTx -= 1;
             if (stone.vy > 0) nextTy += 2; else if (stone.vy < 0) nextTy -= 1;
-
             if (checkCollisionForStone(nextTx, nextTy)) {
                 placeBigTileObject(tx, ty, 128);
                 movingStones.splice(i, 1);
@@ -336,27 +485,30 @@ function update(deltaTime) {
     }
 
     updateEnemies();
-
     if (player.moveLockTimer > 0) player.moveLockTimer--;
 
-    // Törmäykset (Pelaaja vs Vihollinen)
+    // TÖRMÄYKSET
     for (let enemy of enemies) {
-        let dx = Math.abs(player.x - enemy.x);
-        let dy = Math.abs(player.y - enemy.y);
-        const ALIGN_TOLERANCE = 6; 
-        const HIT_DIST = 20; 
-        
-        const hitSide = (dy < ALIGN_TOLERANCE && dx < HIT_DIST);
-        const hitVertical = (dx < ALIGN_TOLERANCE && dy < HIT_DIST);
-        if (hitSide || hitVertical) {
-            playerDie(); return; 
+        let pCX = player.x + 16;
+        let pCY = player.y + 16;
+        let eCX = enemy.x + 16;
+        let eCY = enemy.y + 16;
+        let dx = Math.abs(pCX - eCX);
+        let dy = Math.abs(pCY - eCY);
+        const KILL_DIST = 33;    
+        const ALIGN_ZONE = 10;   
+        let hitHorizontal = (dx < KILL_DIST && dy < ALIGN_ZONE);
+        let hitVertical = (dy < KILL_DIST && dx < ALIGN_ZONE);
+        if (hitHorizontal || hitVertical) {
+            playerDie(); 
+            return; 
         }
     }
 
+    // PELAAJAN LIIKE
     if (player.isMoving) {
         const distToTargetX = player.targetX - player.x;
         const distToTargetY = player.targetY - player.y;
-
         if (Math.abs(distToTargetX) <= player.speed && Math.abs(distToTargetY) <= player.speed) {
             player.x = player.targetX;
             player.y = player.targetY;
@@ -374,15 +526,11 @@ function update(deltaTime) {
         let nextX = player.x;
         let nextY = player.y;
         let dx = 0; let dy = 0;
-        
-        // KORJAUS: LIIKKEEN ASKEL ON NYT 32 (oli 16)
         const MOVE_STEP = 32; 
-
         if (keys['ArrowUp'] || keys['KeyW']) { dy = -MOVE_STEP; player.direction = 0; }
         else if (keys['ArrowDown'] || keys['KeyS']) { dy = MOVE_STEP; player.direction = 2; }
         else if (keys['ArrowLeft'] || keys['KeyA']) { dx = -MOVE_STEP; player.direction = 3; }
         else if (keys['ArrowRight'] || keys['KeyD']) { dx = MOVE_STEP; player.direction = 1; }
-
         if (dx !== 0 || dy !== 0) {
             nextX += dx;
             nextY += dy;
@@ -399,14 +547,11 @@ function update(deltaTime) {
     }
 }
 
-// --- APUFUNKTIOT ---
-
 function canMoveTo(pixelX, pixelY) {
     const tx1 = Math.floor(pixelX / TILE_SIZE);
     const ty1 = Math.floor(pixelY / TILE_SIZE);
     const tx2 = Math.floor((pixelX + 28) / TILE_SIZE);
     const ty2 = Math.floor((pixelY + 28) / TILE_SIZE);
-
     const isWalkable = (tx, ty) => {
         if (tx < 0 || ty < 0 || tx >= 32 || ty >= 24) return false;
         const tile = map[ty][tx];
@@ -414,7 +559,6 @@ function canMoveTo(pixelX, pixelY) {
         if (tile >= 128 && tile <= 131) return false;
         return true; 
     };
-
     return isWalkable(tx1, ty1) && isWalkable(tx2, ty1) && isWalkable(tx1, ty2) && isWalkable(tx2, ty2);
 }
 
@@ -423,12 +567,9 @@ function canEnemyMoveTo(pixelX, pixelY, excludeEnemy) {
     const ty1 = Math.floor(pixelY / TILE_SIZE);
     const tx2 = Math.floor((pixelX + 28) / TILE_SIZE);
     const ty2 = Math.floor((pixelY + 28) / TILE_SIZE);
-    
     if (tx1 < 0 || ty1 < 0 || tx2 >= 32 || ty2 >= 24) return false;
-    
     const isMapFree = (tx, ty) => { return map[ty][tx] === TILE_EMPTY; };
     if (!isMapFree(tx1, ty1) || !isMapFree(tx2, ty1) || !isMapFree(tx1, ty2) || !isMapFree(tx2, ty2)) return false;
-    
     for (let other of enemies) {
         if (other === excludeEnemy) continue; 
         if (Math.abs(pixelX - other.x) < 32 && Math.abs(pixelY - other.y) < 32) return false; 
@@ -447,7 +588,6 @@ function updateEnemies() {
             let preferences = [];
             if (enemy.moveType === 'left') preferences = [left, forward, right, back];
             else preferences = [right, forward, left, back];
-
             for (let i = 0; i < preferences.length; i++) {
                 const tryDir = preferences[i];
                 let testX = enemy.x;
@@ -468,7 +608,6 @@ function updateEnemies() {
         if (enemy.dir === 1) nextX += enemy.speed;
         if (enemy.dir === 2) nextY += enemy.speed;
         if (enemy.dir === 3) nextX -= enemy.speed;
-
         if (canEnemyMoveTo(nextX, nextY, enemy)) {
             enemy.x = nextX;
             enemy.y = nextY;
@@ -492,34 +631,23 @@ function placeBigTileObject(x, y, startTileIndex) {
 function drawTile(ctx, tileIndex, x, y) {
     const tilesPerRow = 32; 
     const SOURCE_TILE_SIZE = 16; 
-    
     const sourceX = (tileIndex % tilesPerRow) * SOURCE_TILE_SIZE;
     const sourceY = Math.floor(tileIndex / tilesPerRow) * SOURCE_TILE_SIZE;
-
-    ctx.drawImage(
-        tileset,
-        sourceX, sourceY, SOURCE_TILE_SIZE, SOURCE_TILE_SIZE,
-        parseInt(x), parseInt(y), TILE_SIZE, TILE_SIZE 
-    );
+    ctx.drawImage(tileset, sourceX, sourceY, SOURCE_TILE_SIZE, SOURCE_TILE_SIZE, parseInt(x), parseInt(y), TILE_SIZE, TILE_SIZE);
 }
 
 function drawSprite(ctx, spriteIndex, x, y, size = TILE_SIZE, offset = 0) {
     const SOURCE_SPRITE_SIZE = 32; 
     const sourceX = spriteIndex * SOURCE_SPRITE_SIZE;
     const sourceY = 0; 
-
-    ctx.drawImage(
-        spriteset,
-        sourceX, sourceY, SOURCE_SPRITE_SIZE, SOURCE_SPRITE_SIZE,
-        parseInt(x) + offset, parseInt(y) + offset, size, size
-    );
+    ctx.drawImage(spriteset, sourceX, sourceY, SOURCE_SPRITE_SIZE, SOURCE_SPRITE_SIZE, parseInt(x) + offset, parseInt(y) + offset, size, size);
 }
 
 function draw(ctx) {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    // Kartta
+    // KARTTA
     for (let y = 0; y < 24; y++) {
         for (let x = 0; x < 32; x++) {
             const tileID = map[y][x];
@@ -529,26 +657,23 @@ function draw(ctx) {
         }
     }
 
-    // Viholliset (4 tiiltä)
+    // VIHUT & KIVET
     enemies.forEach(enemy => {
         let baseTile = 144; 
         if (globalFrame === 1) baseTile = 148; 
-        
-        drawTile(ctx, baseTile,     enemy.x,      enemy.y);
+        drawTile(ctx, baseTile, enemy.x, enemy.y);
         drawTile(ctx, baseTile + 1, enemy.x + 16, enemy.y);
-        drawTile(ctx, baseTile + 2, enemy.x,      enemy.y + 16);
+        drawTile(ctx, baseTile + 2, enemy.x, enemy.y + 16);
         drawTile(ctx, baseTile + 3, enemy.x + 16, enemy.y + 16);
     });
-
-    // Kivet
     movingStones.forEach(stone => {
-        drawTile(ctx, 128, stone.x,      stone.y);
+        drawTile(ctx, 128, stone.x, stone.y);
         drawTile(ctx, 129, stone.x + 16, stone.y);
-        drawTile(ctx, 130, stone.x,      stone.y + 16);
+        drawTile(ctx, 130, stone.x, stone.y + 16);
         drawTile(ctx, 131, stone.x + 16, stone.y + 16);
     });
 
-    // Pelaaja (ISONA Spritena 32x32)
+    // PELAAJA
     if (playerDeathTimer === 0) {
         let spriteIndex = 0;
         const isMoving = keys['ArrowUp'] || keys['KeyW'] || keys['ArrowDown'] || keys['KeyS'] || keys['ArrowLeft'] || keys['KeyA'] || keys['ArrowRight'] || keys['KeyD'];
@@ -561,7 +686,7 @@ function draw(ctx) {
         drawSprite(ctx, spriteIndex, player.x, player.y, 32, 0);
     }
 
-    // Räjähdykset (KORJAUS: Piirretään ISONA 32x32)
+    // RÄJÄHDYKSET
     explosions.forEach(exp => {
         let spriteIndex = SPRITE_EXPLOSION_1 + exp.frame;
         drawSprite(ctx, spriteIndex, exp.x, exp.y, 32, 0);
@@ -570,19 +695,69 @@ function draw(ctx) {
     // HUD
     ctx.font = "16px monospace"; 
     ctx.textBaseline = "top"; 
-    
+    let displayLevel = currentLevel;
+    if (displayLevel >= MAX_LEVELS) displayLevel = MAX_LEVELS - 1;
+    const currentCaveNum = Math.floor(displayLevel / ROOMS_PER_CAVE) + 1;
+    const currentRoomNum = (displayLevel % ROOMS_PER_CAVE) + 1;
+
     ctx.fillStyle = "#00EEEE"; 
-    ctx.fillText("CAVE:1", 32, 0); 
+    ctx.fillText("CAVE:" + currentCaveNum, 32, 0); 
     ctx.fillStyle = "#00EE00"; 
     ctx.fillText("MINER MACHINE", 176, 0); 
     ctx.fillStyle = "#00EEEE"; 
-    ctx.fillText("ROOM:01", 400, 0); 
-
+    ctx.fillText("ROOM:" + currentRoomNum.toString().padStart(2, '0'), 400, 0); 
     const statY = 32; 
     ctx.fillText("SCORE:" + score.toString().padStart(5, '0'), 32, statY);
     ctx.fillText("MEN:" + lives, 208, statY); 
     ctx.fillText("TIME:" + gameTime.toString().padStart(5, '0'), 368, statY); 
 
+    // --- RUUTUTILA: PERSONAL BEST SCORES ---
+    if (isHighScores) {
+        // Tumma tausta
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        
+        ctx.fillStyle = "#FFFF00"; // Keltainen otsikko
+        ctx.textAlign = "center";
+        ctx.font = "32px monospace";
+        // --- MUUTOS TÄSSÄ ---
+        ctx.fillText("PERSONAL BEST SCORES", SCREEN_WIDTH / 2, 60);
+
+        // Hae pisteet
+        let savedScores = localStorage.getItem(HIGH_SCORE_KEY);
+        let scores = savedScores ? JSON.parse(savedScores) : [];
+
+        // Piirrä lista
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "20px monospace";
+        let startY = 120;
+        
+        if (scores.length === 0) {
+            ctx.fillText("NO SCORES YET", SCREEN_WIDTH / 2, startY);
+        } else {
+            for (let i = 0; i < scores.length; i++) {
+                let s = scores[i];
+                let rank = (i + 1) + ".";
+                // Asemointi: Sija - Nimi - Pisteet
+                ctx.textAlign = "right";
+                ctx.fillText(rank, 160, startY + (i * 24));
+                
+                ctx.textAlign = "left";
+                ctx.fillText(s.name, 180, startY + (i * 24));
+                
+                ctx.textAlign = "right";
+                ctx.fillText(s.score.toString().padStart(6, '0'), 380, startY + (i * 24));
+            }
+        }
+
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#00FF00";
+        ctx.fillText("PRESS ENTER TO RESTART", SCREEN_WIDTH / 2, 360);
+        ctx.textAlign = "start"; // Palauta oletus
+        return; 
+    }
+
+    // GAME OVER -RUUTU
     if (isGameOver) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; 
         ctx.fillRect(100, 120, 312, 120); 
@@ -598,6 +773,7 @@ function draw(ctx) {
         ctx.textAlign = "start"; 
     }
 
+    // LEVEL CLEARED -RUUTU
     if (isLevelCompleted) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; 
         ctx.fillRect(100, 120, 312, 120);
@@ -610,6 +786,24 @@ function draw(ctx) {
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "16px monospace";
         ctx.fillText("PRESS ENTER", SCREEN_WIDTH / 2, 200);
+        ctx.textAlign = "start"; 
+    }
+
+    // VOITTORUUTU
+    if (isGameWon) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.8)"; 
+        ctx.fillRect(100, 100, 312, 160); 
+        ctx.strokeStyle = "#FFD700"; 
+        ctx.strokeRect(100, 100, 312, 160);
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#FFD700"; 
+        ctx.font = "32px monospace"; 
+        ctx.fillText("YOU WIN!", SCREEN_WIDTH / 2, 140);
+        ctx.fillStyle = "#00FF00";
+        ctx.fillText("BONUS 5000", SCREEN_WIDTH / 2, 180);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "16px monospace";
+        ctx.fillText("PRESS ENTER", SCREEN_WIDTH / 2, 220);
         ctx.textAlign = "start"; 
     }
 }
@@ -655,7 +849,7 @@ function tryPushStone(targetPixelX, targetPixelY, pushDx, pushDy) {
             map[stoneTy][stoneTx] = TILE_EMPTY; map[stoneTy][stoneTx+1] = TILE_EMPTY;
             map[stoneTy+1][stoneTx] = TILE_EMPTY; map[stoneTy+1][stoneTx+1] = TILE_EMPTY;
             movingStones.push({ x: stoneTx * TILE_SIZE, y: stoneTy * TILE_SIZE, vx: Math.sign(pushDx) * 4, vy: Math.sign(pushDy) * 4 });
-            player.moveLockTimer = 10; 
+            player.moveLockTimer = 10;
         }
     }
 }
