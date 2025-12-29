@@ -8,7 +8,7 @@ const SCREEN_WIDTH = 512;
 const SCREEN_HEIGHT = 384;
 const TILE_SIZE = 16;  
 const ROOMS_PER_CAVE = 10 
-const MAX_LEVELS = 10 
+const MAX_LEVELS = 30
 const HIGH_SCORE_KEY = 'minerMachineHighScores_v1'; 
 
 // --- TILE ID:t ---
@@ -236,6 +236,344 @@ const COMPACT_LEVELS = [
         "#...OOOOOO.O..E#",
         "#.O.B...O.O..O.#",
         "#OOOOOO.OE.O..O#",
+        "################"
+    ],
+    // ROOM 11
+    [
+        "#.....B..B.B..B#",
+        "#.BBBBBBBBBBBB.#",
+        "#.BOB...E..BOB.#",
+        "#.BBBE$OO$.BBB.#",
+        "#.....O$EO.BBB.#",
+        "#EBBB.$OO$.BBB$#",
+        "#.BPB...EE.BOB.#",
+        "#.BBBBBBBBBBBB.#",
+        "#.........BE..E#",
+        "################"
+    ],
+    // ROOM 12
+    [
+        "#$B....EB..$...#",
+        "#BBBBBBBB.BBOB.#",
+        "#E..BE..BPB...E#",
+        "#.BBBBBBB.OBBBB#",
+        "#..$O..EB.B....#",
+        "#BBBBBBBB.BBBO.#",
+        "#E$$....B.B....#",
+        "#EB..BBBB...BBB#",
+        "#...B..OE......#",
+        "################"
+    ],
+    // ROOM 13
+    [
+        "#EB.O...E......#",
+        "#.OBBBBBBBBBBBB#",
+        "#.OBE..O..EB.BO#",
+        "#.OOBBBBBBBBEBB#",
+        "#.OBEBEBBBOBBBB#",
+        "#.OB........PBB#",
+        "#.OBBBBBBBBBOBB#",
+        "#$OBOBBBOBBBEBO#",
+        "#$OBBBOBBBOB.BB#",
+        "################"
+    ],
+    // ROOM 14
+    [
+        "#O..OOE.O.O...E#",
+        "#....OEE......E#",
+        "#OBOBOOBOOOPOOO#",
+        "#....O....O....#",
+        "#.OOBOO.OOOOOB.#",
+        "#..............#",
+        "#.O..O..O.O..O.#",
+        "#OOOOOOOOOOOOO.#",
+        "#$..EEE........#",
+        "################"
+    ],
+    // ROOM 15
+    [
+        "#.B..BB......BO#",
+        "#.E....B.O.B.BE#",
+        "#B.B.BBOBB.EE..#",
+        "#........B.BBB.#",
+        "#.BOB.OO$..B...#",
+        "#...E..EB.O..$B#",
+        "#OBBBOOOB.B.BO$#",
+        "#......B....$$$#",
+        "#PBBOBBO.BB.$O$#",
+        "################"
+    ],
+    // ROOM 16
+    [
+        "#B$OBBBOO$$E...#",
+        "#$O.PB..BOOOOOB#",
+        "#BO.OOO.BOOOBO$#",
+        "#.O.OOO.....BO$#",
+        "#.O.OO..BBO.OOB#",
+        "#EOBOOEBB.O.BO$#",
+        "#.O....BBB$.OO$#",
+        "#BBBBBB...B.BB$#",
+        "#BEEEE..BE.....#",
+        "################"
+    ],
+    // ROOM 17
+    [
+        "#O......BBEB...#",
+        "#.O.B.B.OBEB.O$#",
+        "#.......OBEO.OB#",
+        "#.B.O.B.BBEB.O$#",
+        "#..P....OBEB.O$#",
+        "#.B.O.B.BB.O.OB#",
+        "#.......OBEB.O$#",
+        "#.O.B.B.BBEB.OB#",
+        "#O......O$EB.BB#",
+        "################"
+    ],
+    // ROOM 18
+    [
+        "#......P......E#",
+        "#.BOBO$OO$OBOB.#",
+        "#......E.......#",
+        "#.BBBBBBBBBBBB.#",
+        "#B..........E.B#",
+        "#.EOOOO..OOOO..#",
+        "#.B.E.EBB.E.EB.#",
+        "#..B$$BBBB$$B..#",
+        "#B............B#",
+        "################"
+    ],
+    // ROOM 19
+    [
+        "#$B..EB...B..B$#",
+        "#OB.B...B.E.BBO#",
+        "#BOBOBB$OBBOBOB#",
+        "#.B.E..B...B.B.#",
+        "#EBB.B.B.B.B.BE#",
+        "#.BB.$...B..EB.#",
+        "#BOBBOBBBO$BBOB#",
+        "#OB...B...B.EBO#",
+        "#PB.B...BE..BB$#",
+        "################"
+    ],
+    // ROOM 20
+    [
+        "#$O.BB$.E.BB.O$#",
+        "#...OOOOOOOO...#",
+        "#EBO........OBE#",
+        "#BO..BOBBOB..OB#",
+        "#...OO$.E$OO..P#",
+        "#BO..BOBBOB..OB#",
+        "#EBO..E.....OBE#",
+        "#...OOOOOOOO...#",
+        "#$O.BB.E.$BB.O$#",
+        "################"
+    ],
+    // ROOM 21
+    [
+        "#$E.BBB$P$B.BB$#",
+        "#BBB....O.E....#",
+        "#.....OE......B#",
+        "#.BBOOOOOOOOB..#",
+        "#E.O..E$$E..O..#",
+        "#..BOOOOOOOOB.B#",
+        "#.O............#",
+        "#....$B.B.B..EB#",
+        "#$BB.E.B....BB$#",
+        "################"
+    ],
+    // ROOM 22
+    [
+        "#.....$B.......#",
+        "#.BBBBBB.OBBBO.#",
+        "#......B.B...B.#",
+        "#BBOBB.B.BE$.B.#",
+        "#.E..E.BPB.$.B.#",
+        "#EBBBOBO.B.$.B.#",
+        "#......B.BEEEB.#",
+        "#BBOBB.B.OBBBO.#",
+        "#$E....B.......#",
+        "################"
+    ],
+    // ROOM 23
+    [
+        "#$O.O....OB..O$#",
+        "#$O...OBBOBO.BB#",
+        "#.O.OBO..O.B.O.#",
+        "#EO.BBOO.O$B.OE#",
+        "#.O.OBO..OBO.O.#",
+        "#EO.B$OPOOBB.OE#",
+        "#.OEB.O..OBO.O.#",
+        "#B..OBOBBO.E.O$#",
+        "#$OE.BOE...O.O$#",
+        "################"
+    ],
+    // ROOM 24
+    [
+        "#BOB.BOBBOB.BOB#",
+        "#$BBEBOBE.B.BB$#",
+        "#BBB.BBBBBB.E..#",
+        "#$BB.B....B.BB$#",
+        "#OBO.B.OO.B.OBO#",
+        "#$BB.BE$O4B.BB$#",
+        "#BBB.BBBBBB.BBB#",
+        "#$BBEB.EBPBEBB$#",
+        "#BOB.BOBBOB.BOB#",
+        "################"
+    ],
+    // ROOM 25
+    [
+        "#$.....P......$#",
+        "#.$BBBBOOBBBB$.#",
+        "#.BE....E....B.#",
+        "#.B.OBBBBBBB.BE#",
+        "#.B.BE.$$.EB.BE#",
+        "#.B.OBBBBBBO.B.#",
+        "#.B....$$....B.#",
+        "#.OBBBOBBOBBBO.#",
+        "#E..E..........#",
+        "################"
+    ],
+    // ROOM 26 (ORIG CAVE2,ROOM1)
+    [
+        "#$OBOBBBBB.BE..#",
+        "#.BBBBOOOO..BB.#",
+        "#.BBBO...EO..B.#",
+        "#EBBOE.$$.EOOB.#",
+        "#BOBBOEOBO.OBB.#",
+        "#EBBBO..OE.OBO.#",
+        "#.BBBBO...BBBB.#",
+        "#.OBOBBOOOBBOB.#",
+        "#$OBBBP.OOBBBB.#",
+        "################"
+    ],
+    // ROOM 27
+    [
+        "#BP..O.$$.O.BB.#",
+        "#B.O.OE...O.BB.#",
+        "#B.B.....E..BO.#",
+        "#B.BEO.BO.B.BB.#",
+        "#B.OEO.$O$B.BOE#",
+        "#O.OOOOOOOOOOB.#",
+        "#..............#",
+        "#O.OOOOOOOOOOBO#",
+        "#..B..E$...EBBB#",
+        "################"
+    ],
+    // ROOM 28
+    [
+        "#.B$B$B$P$B$B$.#",
+        "#BOOOOOOOOOOOOB#",
+        "#$BE.........B$#",
+        "#.O.OBBBBBBOEO.#",
+        "#EB.BE.$$.EB.BE#",
+        "#.O.OBBBBBBO.O.#",
+        "#$BE.......E.B$#",
+        "#BOOOOOOOOOOOOB#",
+        "#.$B$B$B$B$B$B.#",
+        "################"
+    ],
+    // ROOM 29
+    [
+        "#$BOB..BO$.BBBE#",
+        "#.OBBB...E.BOBE#",
+        "#.OBOBOOOOOBBB.#",
+        "#EBBO$B$$BO....#",
+        "#.BBO$.$E$OBBO.#",
+        "#OBOOB..EBO$BB.#",
+        "#BBBO$B$B$OOBB.#",
+        "#BBBOOOOOBOBBBE#",
+        "#BBPPB.E..BBBO$#",
+        "################"
+    ],
+    // ROOM 30
+    [
+        "#$E...OBOE..O$O#",
+        "#E.BB..BB.B..B.#",
+        "#.O...$.....$..#",
+        "#.B.B.BB.BB.EO.#",
+        "#..E.......EBB.#",
+        "#B.B.B.OB.B....#",
+        "#.....BPO...BBB#",
+        "#B.BEBOBB.B....#",
+        "#$.B..$E..$B.B$#",
+        "################"
+    ],
+    // ROOM 31
+    [
+        "#$$$$$$$...E.O$#",
+        "#OOOOOOOOOOOB.$#",
+        "#.BE.E........B#",
+        "#.OEOBOBOBOBO..#",
+        "#PO.BE..$..EB.O#",
+        "#.O.OBOBOBOBO..#",
+        "#.B.E.........B#",
+        "#OOOOOOOOOOOB.$#",
+        "#$$$$$$$..E..O$#",
+        "################"
+    ],
+    // ROOM 32
+    [
+        "#EE..E.E.E.EBP$#",
+        "#.BBBBBBBBBBBBB#",
+        "#..............#",
+        "#EOB$BOB$BOB$B.#",
+        "#..............#",
+        "#.$BOB$BOB$BOB.#",
+        "#E.............#",
+        "#BBBBBBBBBBBBB.#",
+        "#$.............#",
+        "################"
+    ],
+    // ROOM 33
+    [
+        "#...O...OE..O$$#",
+        "#BO.B.B.B.B.O$.#",
+        "#.$.B.B.BEBEO$.#",
+        "#.B.$.B.B.$.O$.#",
+        "#.B.O.O.O.O.OB.#",
+        "#.B.BEB.B.B.OB.#",
+        "#.B.B.B.B.B.OO.#",
+        "#.B.O.OEO.B.B.E#",
+        "#PB...E...O.BEO#",
+        "################"
+    ],
+    // ROOM 34
+    [
+        "#$....B.PB....$#",
+        "#..O.B$B$B$.O..#",
+        "#.BB.$E..EB.BB.#",
+        "#.B..B.$B.$..B.#",
+        "#.OB.$EB$.B.BO.#",
+        "#.B..B.E..$.EB.#",
+        "#EBB.$B$B$B.BB.#",
+        "#..O.B....B.OE.#",
+        "#$..E..BB.....$#",
+        "################"
+    ],
+    // ROOM 35
+    [
+        "#PBBBOBBBBBBOB$#",
+        "#BBE........EB.#",
+        "#.O.O$BBOB$O.BO#",
+        "#BB.$E.....$.B$#",
+        "#BO.B.O$$OEB.O.#",
+        "#BB.B.E...E$.B.#",
+        "#OBEO$BOBB$O.BO#",
+        "#BB.........EB.#",
+        "#BBOBBBBBBOBBB$#",
+        "################"
+    ],
+    // ROOM 36
+    [
+        "#$E...OBOE..O$O#",
+        "#E.BB..BB.B..B.#",
+        "#.O...$.....$..#",
+        "#.B.B.BB.BB.EO.#",
+        "#..E.......EBB.#",
+        "#B.B.B.OB.B....#",
+        "#.....BPO...BBB#",
+        "#B.BEBOBB.B....#",
+        "#$.B..$E..$B.B$#",
         "################"
     ],
 ];
