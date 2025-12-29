@@ -526,36 +526,37 @@ function update(deltaTime) {
         stone.y += stone.vy;
         let stoneStopped = false;
 
-        // --- KORJATTU TÖRMÄYS: KIVI VS VIHOLLINEN (32x32) ---
+        // --- KORJATTU TÖRMÄYS: KESKIPISTE-ETÄISYYS (VARMIN TAPA) ---
         for (let e = enemies.length - 1; e >= 0; e--) {
             let enemy = enemies[e];
-            
-            // Määritellään laatikot (hitboxit)
-            // Vähennetään reunoista vähän (HIT_MARGIN), jotta ihan pieni hipaisu ei tapa
-            const HIT_MARGIN = 6; 
-            
-            let sLeft = stone.x + HIT_MARGIN;
-            let sRight = stone.x + 32 - HIT_MARGIN;
-            let sTop = stone.y + HIT_MARGIN;
-            let sBottom = stone.y + 32 - HIT_MARGIN;
 
-            let eLeft = enemy.x + HIT_MARGIN;
-            let eRight = enemy.x + 32 - HIT_MARGIN;
-            let eTop = enemy.y + HIT_MARGIN;
-            let eBottom = enemy.y + 32 - HIT_MARGIN;
+            // 1. Lasketaan molempien keskipisteet
+            let sCX = stone.x + 16;
+            let sCY = stone.y + 16;
+            let eCX = enemy.x + 16;
+            let eCY = enemy.y + 16;
 
-            // Tarkistetaan menevätkö laatikot päällekkäin
-            if (sLeft < eRight && sRight > eLeft &&
-                sTop < eBottom && sBottom > eTop) {
+            // 2. Lasketaan etäisyys (itseisarvo)
+            let dx = Math.abs(sCX - eCX);
+            let dy = Math.abs(sCY - eCY);
+
+            // 3. OSUMAEHTO
+            // HIT_DIST: Kuinka lähellä keskipisteiden pitää olla.
+            // 32 tarkoittaa, että reunat koskettavat.
+            // 28 tarkoittaa, että 4 pikselin päällekkäisyys riittää tappoon.
+            // Tämä estää "jumiin jäämisen" reunalla.
+            const HIT_DIST = 28; 
+
+            if (dx < HIT_DIST && dy < HIT_DIST) {
                 
                 // OSUMA!
                 playSound('explosion');
                 explosions.push({ x: enemy.x, y: enemy.y, frame: 0, timer: 0 });
                 enemies.splice(e, 1); 
                 
-                score += 4; // Pisteet
+                score += 4; // 4 PISTETTÄ
                 
-                // Kohdistetaan kivi ruudukkoon tapon jälkeen
+                // Pysäytetään kivi ja kohdistetaan ruudukkoon
                 stone.x = Math.round(stone.x / 32) * 32;
                 stone.y = Math.round(stone.y / 32) * 32;
 
@@ -568,19 +569,18 @@ function update(deltaTime) {
         
         if (stoneStopped) continue;
 
-        // ... loput kiven logiikasta (grid check jne) pysyy samana ...
+        // Kiven pysähtyminen seiniin/maahan (Pysyy samana)
         if (stone.x % 16 === 0 && stone.y % 16 === 0) {
-             // ... pidä tämä vanha koodi ennallaan ...
-             let tx = stone.x / TILE_SIZE;
-             let ty = stone.y / TILE_SIZE;
-             let nextTx = tx; let nextTy = ty;
-             if (stone.vx > 0) nextTx += 2; else if (stone.vx < 0) nextTx -= 1;
-             if (stone.vy > 0) nextTy += 2; else if (stone.vy < 0) nextTy -= 1;
+            let tx = stone.x / TILE_SIZE;
+            let ty = stone.y / TILE_SIZE;
+            let nextTx = tx; let nextTy = ty;
+            if (stone.vx > 0) nextTx += 2; else if (stone.vx < 0) nextTx -= 1;
+            if (stone.vy > 0) nextTy += 2; else if (stone.vy < 0) nextTy -= 1;
 
-             if (checkCollisionForStone(nextTx, nextTy)) {
-                 placeBigTileObject(tx, ty, 128);
-                 movingStones.splice(i, 1);
-             }
+            if (checkCollisionForStone(nextTx, nextTy)) {
+                placeBigTileObject(tx, ty, 128);
+                movingStones.splice(i, 1);
+            }
         }
     }
 
@@ -926,30 +926,60 @@ function checkDigging() {
 function tryPushStone(targetPixelX, targetPixelY, pushDx, pushDy) {
     const tx = Math.floor((targetPixelX + 8) / TILE_SIZE);
     const ty = Math.floor((targetPixelY + 8) / TILE_SIZE);
+    
     if (ty < 0 || ty >= 24 || tx < 0 || tx >= 32) return;
     if (!map[ty]) return;
+    
     const tileID = map[ty][tx];
+    
+    // Tarkistetaan onko kyseessä kivi (ID 128-131)
     if (tileID >= 128 && tileID <= 131) {
         let stoneTx = tx;
         let stoneTy = ty;
+        
+        // Säädetään koordinaatit kiven vasempaan yläkulmaan
         if (tileID === 129 || tileID === 131) stoneTx -= 1;
         if (tileID === 130 || tileID === 131) stoneTy -= 1;
-        let checkX = stoneTx * TILE_SIZE;
-        let checkY = stoneTy * TILE_SIZE;
-        if (pushDx > 0) checkX += 16; else if (pushDx < 0) checkX -= 16;
-        if (pushDy > 0) checkY += 16; else if (pushDy < 0) checkY -= 16;
+        
+        // Lasketaan kiven nykyinen pikselisijainti
+        let currentStoneX = stoneTx * TILE_SIZE;
+        let currentStoneY = stoneTy * TILE_SIZE;
+
+        // Lasketaan MINNE kivi olisi menossa (32px suuntaan)
+        let destX = currentStoneX;
+        let destY = currentStoneY;
+        
+        if (pushDx > 0) destX += 32; 
+        else if (pushDx < 0) destX -= 32;
+        
+        if (pushDy > 0) destY += 32; 
+        else if (pushDy < 0) destY -= 32;
+
+        // --- UUSI TARKISTUS: ONKO MÄÄRÄNPÄÄSSÄ VIHOLLINEN? ---
         for (let enemy of enemies) {
-            if (Math.abs(enemy.x - checkX) < 12 && Math.abs(enemy.y - checkY) < 12) return; 
+            // Jos vihollinen on kiven määränpäässä (tai hyvin lähellä sitä)
+            if (Math.abs(enemy.x - destX) < 28 && Math.abs(enemy.y - destY) < 28) {
+                return; // ESTÄ TYÖNTÖ! Kivi toimii kuin seinä.
+            }
         }
+
+        // --- TARKISTETAAN SEINÄT JA MAASTO ---
         let destTx = stoneTx;
         let destTy = stoneTy;
         if (pushDx > 0) destTx += 2; if (pushDx < 0) destTx -= 1;
         if (pushDy > 0) destTy += 2; if (pushDy < 0) destTy -= 1;
+
+        // Jos tila on vapaa (ei seinää, ei toista kiveä), aloitetaan liike
         if (!checkCollisionForStone(destTx, destTy) && !checkCollisionForStone(destTx + (pushDx?0:1), destTy + (pushDy?0:1))) {
+            
+            // Tyhjennetään vanha paikka kartasta
             map[stoneTy][stoneTx] = TILE_EMPTY; map[stoneTy][stoneTx+1] = TILE_EMPTY;
             map[stoneTy+1][stoneTx] = TILE_EMPTY; map[stoneTy+1][stoneTx+1] = TILE_EMPTY;
-            movingStones.push({ x: stoneTx * TILE_SIZE, y: stoneTy * TILE_SIZE, vx: Math.sign(pushDx) * 4, vy: Math.sign(pushDy) * 4 });
-            player.moveLockTimer = 10;
+            
+            // Lisätään liikkuviin kiviin
+            movingStones.push({ x: currentStoneX, y: currentStoneY, vx: Math.sign(pushDx) * 4, vy: Math.sign(pushDy) * 4 });
+            
+            player.moveLockTimer = 10; 
         }
     }
 }
