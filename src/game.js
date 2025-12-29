@@ -425,9 +425,8 @@ function update(deltaTime) {
     // TILAT: GAMEOVER, VOITTO tai LEVEL CLEAR
     if (isGameOver || isLevelCompleted || isGameWon || isHighScores) {
         if (keys['Enter']) { 
-             keys['Enter'] = false; // Estä rämpytys
+             keys['Enter'] = false; 
              
-             // 1. Jos ollaan HIGH SCORE -ruudussa -> Aloita peli alusta
              if (isHighScores) {
                  lives = 5; score = 0; currentLevel = 0; 
                  isHighScores = false;
@@ -437,15 +436,23 @@ function update(deltaTime) {
                  return;
              }
 
-             // 2. Jos peli päättyi (Voitto tai Häviö) -> Mene High Score -listalle
              if (isGameOver || isGameWon) {
                  checkAndSaveHighScore(); 
                  isHighScores = true;     
                  return;
              }
 
-             // 3. Jos vain tason läpäisy -> Seuraava taso
              if (isLevelCompleted) {
+                 // --- UUSI LOGIIKKA: TARKISTETAAN LUOLAN VAIHTUMINEN ---
+                 // Jos seuraava taso aloittaa uuden luolan (eli nykyinen + 1 on jaollinen 25:llä)
+                 // Esim. ollaan tasolla 24 (Room 25) -> 24+1 = 25 -> Jaollinen!
+                 if ((currentLevel + 1) % ROOMS_PER_CAVE === 0) {
+                     score += 5000;  // 5000 lisäpistettä
+                     lives++;        // 1 lisäelämä
+                     playSound('score'); // Äänimerkki palkinnosta
+                     console.log("CAVE COMPLETED! Bonus 5000pts + 1 Life");
+                 }
+
                  currentLevel++;
                  gameTime = INITIAL_TIME; 
                  initGame();
@@ -453,6 +460,7 @@ function update(deltaTime) {
         }
         return;
     }
+
 
     // BONUSLASKENTA
     if (isLevelClearBonus) {
@@ -511,41 +519,68 @@ function update(deltaTime) {
         }
     }
 
-    // KIVET
+// KIVET
     for (let i = movingStones.length - 1; i >= 0; i--) {
         let stone = movingStones[i];
         stone.x += stone.vx;
         stone.y += stone.vy;
         let stoneStopped = false;
 
+        // --- KORJATTU TÖRMÄYS: KIVI VS VIHOLLINEN (32x32) ---
         for (let e = enemies.length - 1; e >= 0; e--) {
             let enemy = enemies[e];
-            const HIT_MARGIN = 4;
-            if (stone.x < enemy.x + 16 - HIT_MARGIN && stone.x + 16 > enemy.x + HIT_MARGIN &&
-                stone.y < enemy.y + 16 - HIT_MARGIN && stone.y + 16 > enemy.y + HIT_MARGIN) {
+            
+            // Määritellään laatikot (hitboxit)
+            // Vähennetään reunoista vähän (HIT_MARGIN), jotta ihan pieni hipaisu ei tapa
+            const HIT_MARGIN = 6; 
+            
+            let sLeft = stone.x + HIT_MARGIN;
+            let sRight = stone.x + 32 - HIT_MARGIN;
+            let sTop = stone.y + HIT_MARGIN;
+            let sBottom = stone.y + 32 - HIT_MARGIN;
+
+            let eLeft = enemy.x + HIT_MARGIN;
+            let eRight = enemy.x + 32 - HIT_MARGIN;
+            let eTop = enemy.y + HIT_MARGIN;
+            let eBottom = enemy.y + 32 - HIT_MARGIN;
+
+            // Tarkistetaan menevätkö laatikot päällekkäin
+            if (sLeft < eRight && sRight > eLeft &&
+                sTop < eBottom && sBottom > eTop) {
                 
+                // OSUMA!
                 playSound('explosion');
                 explosions.push({ x: enemy.x, y: enemy.y, frame: 0, timer: 0 });
                 enemies.splice(e, 1); 
+                
+                score += 4; // Pisteet
+                
+                // Kohdistetaan kivi ruudukkoon tapon jälkeen
                 stone.x = Math.round(stone.x / 32) * 32;
                 stone.y = Math.round(stone.y / 32) * 32;
+
                 placeBigTileObject(stone.x / TILE_SIZE, stone.y / TILE_SIZE, 128);
                 movingStones.splice(i, 1);
                 stoneStopped = true;
                 break; 
             }
         }
+        
         if (stoneStopped) continue;
+
+        // ... loput kiven logiikasta (grid check jne) pysyy samana ...
         if (stone.x % 16 === 0 && stone.y % 16 === 0) {
-            let tx = stone.x / TILE_SIZE;
-            let ty = stone.y / TILE_SIZE;
-            let nextTx = tx; let nextTy = ty;
-            if (stone.vx > 0) nextTx += 2; else if (stone.vx < 0) nextTx -= 1;
-            if (stone.vy > 0) nextTy += 2; else if (stone.vy < 0) nextTy -= 1;
-            if (checkCollisionForStone(nextTx, nextTy)) {
-                placeBigTileObject(tx, ty, 128);
-                movingStones.splice(i, 1);
-            }
+             // ... pidä tämä vanha koodi ennallaan ...
+             let tx = stone.x / TILE_SIZE;
+             let ty = stone.y / TILE_SIZE;
+             let nextTx = tx; let nextTy = ty;
+             if (stone.vx > 0) nextTx += 2; else if (stone.vx < 0) nextTx -= 1;
+             if (stone.vy > 0) nextTy += 2; else if (stone.vy < 0) nextTy -= 1;
+
+             if (checkCollisionForStone(nextTx, nextTy)) {
+                 placeBigTileObject(tx, ty, 128);
+                 movingStones.splice(i, 1);
+             }
         }
     }
 
@@ -932,11 +967,23 @@ function checkGold() {
     const tx = Math.floor(centerX / TILE_SIZE);
     const ty = Math.floor(centerY / TILE_SIZE);
     const tileID = map[ty][tx];
+
     if (tileID >= 160 && tileID <= 163) {
-        score++; playSound('gold'); goldRemaining--;
+        // --- MUUTOS: PISTEET HUONEEN NUMERON MUKAAN ---
+        // Lasketaan huoneen numero (1-25)
+        const points = (currentLevel % ROOMS_PER_CAVE) + 1;
+        
+        score += points; // Lisätään huoneen numero pisteisiin
+        
+        playSound('gold'); 
+        goldRemaining--;
+
         if (goldRemaining <= 0) isLevelClearBonus = true; 
+        
         let goldTx = tx; let goldTy = ty;
-        if (tileID === 161 || tileID === 163) goldTx -= 1; if (tileID === 162 || tileID === 163) goldTy -= 1; 
+        if (tileID === 161 || tileID === 163) goldTx -= 1; 
+        if (tileID === 162 || tileID === 163) goldTy -= 1; 
+        
         map[goldTy][goldTx] = TILE_EMPTY; map[goldTy][goldTx+1] = TILE_EMPTY;
         map[goldTy+1][goldTx] = TILE_EMPTY; map[goldTy+1][goldTx+1] = TILE_EMPTY;
     }
