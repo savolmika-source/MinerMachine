@@ -1,0 +1,5 @@
+{
+    "machine": "MSX1E",
+    "presets": "RAM64K",
+    "extensions": { "DISK": null }
+}
