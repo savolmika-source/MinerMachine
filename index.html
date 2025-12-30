@@ -3,26 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Miner Machine HTML5</title>
-    <style>
-        body {
-            background-color: #222;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        canvas {
-            background-color: #000;
-            /* MSX:n resoluutio on yleensä 256x192. 
-               Skaalataan se 2x isommaksi, jotta näkyy nykynäytöillä. */
-            width: 512px; 
-            height: 384px;
-            image-rendering: pixelated; /* Pitää pikselit terävinä */
-            border: 2px solid #666;
-        }
-    </style>
+<style>
+    body {
+        /* Keskitetään peli ruudulle ja laitetaan tausta mustaksi */
+        background-color: #000;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* 100% näkymän korkeudesta */
+        overflow: hidden; /* Piilottaa vierityspalkit */
+    }
+
+    canvas {
+        /* TÄRKEÄ: Pitää pikselit terävinä (pixel art style) */
+        image-rendering: pixelated;       /* Chrome/modernit */
+        image-rendering: crisp-edges;     /* Firefox */
+        image-rendering: -moz-crisp-edges; 
+        
+        /* Skaalaus: Korkeus täyttää ruudun, leveys seuraa suhteessa */
+        height: 100vh;
+        width: auto;
+        
+        /* Jos peli menee liian isoksi, voit vaihtaa height: 90vh; */
+    }
+</style>
 </head>
 <body>
     <canvas id="gameCanvas" width="256" height="192"></canvas>

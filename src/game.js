@@ -1,14 +1,14 @@
 // ==========================================
-// MINER MACHINE - GAME.JS (PERSONAL BEST EDITION)
+// MINER MACHINE - GAME.JS (INSTRUCTIONS EDITION)
 // ==========================================
-console.log("--- VERSION: PERSONAL BEST EDITION ---"); 
+console.log("--- VERSION: INSTRUCTIONS EDITION ---"); 
 
 // --- ASETUKSET ---
 const SCREEN_WIDTH = 512;
 const SCREEN_HEIGHT = 384;
 const TILE_SIZE = 16;  
-const ROOMS_PER_CAVE = 10 
-const MAX_LEVELS = 30
+const ROOMS_PER_CAVE = 10; 
+const MAX_LEVELS = 50; 
 const HIGH_SCORE_KEY = 'minerMachineHighScores_v1'; 
 
 // --- TILE ID:t ---
@@ -22,7 +22,7 @@ const SPRITE_ENEMY = 4;
 const SPRITE_EXPLOSION_1 = 5;
 
 // --- MUUTTUJAT ---
-let currentLevel = 0 //alusta alkaen 0
+let currentLevel = 0; 
 let movingStones = []; 
 let explosions = [];
 let score = 0; 
@@ -33,11 +33,16 @@ let lives = 5;
 let goldRemaining = 0; 
 
 // Pelitilat
+let isTitleScreen = true;  
+let isLevelSelect = false; 
+let isInstructionsScreen = false; // UUSI: Ohjeruutu-tila
+let menuSelection = 0;      // 0=HTML5, 1=MSX, 2=INSTRUCTIONS
 let isGameOver = false; 
 let isGameWon = false;      
 let isLevelCompleted = false; 
 let isLevelClearBonus = false; 
 let isHighScores = false;   
+let selectedCave = 1;
 
 let playerDeathTimer = 0; 
 let bonusFrameCount = 0; 
@@ -62,6 +67,7 @@ let enemies = [];
 // --- KUVIEN LATAUS ---
 const tileset = new Image();
 const spriteset = new Image();
+const manualImg = new Image(); // UUSI: Ohjekuva
 let imagesLoaded = 0;
 
 window.onload = function() {
@@ -75,22 +81,28 @@ window.onload = function() {
 
     tileset.src = 'assets/tiles.png';
     spriteset.src = 'assets/sprites.png';
+    manualImg.src = 'assets/manual.png'; // VARMISTA ETTÄ KUVA ON TÄLLÄ NIMELLÄ
 
     const onImageLoad = () => {
         imagesLoaded++;
-        if (imagesLoaded === 2) {
-            initGame();
+        if (imagesLoaded === 3) { // Odotetaan nyt 3 kuvaa
             requestAnimationFrame((timestamp) => gameLoop(timestamp, ctx));
         }
     };
 
     tileset.onload = onImageLoad;
     spriteset.onload = onImageLoad;
+    manualImg.onload = onImageLoad;
+    
+    // Virheenkäsittely jos manual.png puuttuu, peli käynnistyy silti
+    manualImg.onerror = () => {
+        console.log("Manual image not found, skipping...");
+        onImageLoad();
+    };
 
     window.addEventListener('keydown', e => keys[e.code] = true);
     window.addEventListener('keyup', e => keys[e.code] = false);
 };
-
 // =============================================================
 // KENTTÄDATA (16x10 FORMATTI)
 // =============================================================
@@ -104,9 +116,6 @@ const LEVEL_HEADER = [
 // --- KENTTÄDATA (16x10) ---
 const COMPACT_LEVELS = [
     // ==========================================
-    // CAVE 1 (Huoneet 1 - 25)
-    // ==========================================
-
     // ROOM 01
     [
         "#...OB$BOOBB.O.#",
@@ -565,17 +574,202 @@ const COMPACT_LEVELS = [
     ],
     // ROOM 36
     [
-        "#$E...OBOE..O$O#",
-        "#E.BB..BB.B..B.#",
-        "#.O...$.....$..#",
-        "#.B.B.BB.BB.EO.#",
-        "#..E.......EBB.#",
-        "#B.B.B.OB.B....#",
-        "#.....BPO...BBB#",
-        "#B.BEBOBB.B....#",
-        "#$.B..$E..$B.B$#",
+        "#PBO.O.BB.O.O.O#",
+        "#$............$#",
+        "#O.OBB.BB.BBO.O#",
+        "#..B......E$B..#",
+        "#O.BEB.BB.B.B.O#",
+        "#E.B$.......B..#",
+        "#O.OBBEBB.BBO.O#",
+        "#$.........E..$#",
+        "#O.O.OEBB.O.O.O#",
         "################"
     ],
+    // ROOM 37
+    [
+        "#.OOBE...E.OO..#",
+        "#.E.OB$O.O.$OB.#",
+        "#.B.OOOOBOOOO..#",
+        "#$O.B...P...B.O#",
+        "#.B.OOOOBOOOOEE#",
+        "#E..B$.E..E$OB.#",
+        "#BB.OOOOOOOOO..#",
+        "#...BBBBBBBBB.B#",
+        "#.B.B$O$B$O$B.$#",
+        "################"
+    ],
+    // ROOM 38
+    [
+        "#$E....$$E....$#",
+        "#OOOOOBOOBOOOOO#",
+        "#..E..E.E......#",
+        "#.OOOOOOOOOOOO.#",
+        "#...OOOOOOOO..E#",
+        "#EO..B.P..B..O.#",
+        "#.B$..OBBO..$B.#",
+        "#.BBBB.E..BBBB.#",
+        "#......$$......#",
+        "################"
+    ],
+    // ROOM 39
+    [
+        "#OEO.O.OO.O.OEO#",
+        "#...O...P..O...#",
+        "#O.BBBBBBBBBB.O#",
+        "#..B..EE.E..B..#",
+        "#O.B.O$OO$O.B.O#",
+        "#E.BE.......B..#",
+        "#O.BBBBBBBBBB.O#",
+        "#.........E....#",
+        "#O.O.O.OO.O.O.O#",
+        "################"
+    ],
+    // ROOM 40
+    [
+        "#.E....E.E....E#",
+        "#.OBOBOBOBOBBO.#",
+        "#....OO.OO.....#",
+        "#OBOBBOEOBBOBBO#",
+        "#....POEO......#",
+        "#OOOOOOBOOOOOOO#",
+        "#$$$B$$$$$$B$$$#",
+        "#$$$B$$$$$$B$$$#",
+        "#$$$$$$$$$$$$$$#",
+        "################"
+    ],
+    // ROOM 41
+    [
+        "#O.B.B.BB.B.B.O#",
+        "#EO...$.E$...OE#",
+        "#..OBBBBBBBBO..#",
+        "#.BEO..P...OEB.#",
+        "#.B..OBBBBO..B.#",
+        "#.B.BEO..OEB.B.#",
+        "#.B.B.BOOB.B.B.#",
+        "#.$.$.$OO$.$.$.#",
+        "#OOOOOO.EOOOOOO#",
+        "################"
+    ],
+    // ROOM 42
+    [
+        "#$BBOBBBOBBBBOB#",
+        "#B.BBBBBBB.BB$$#",
+        "#$.BEE...B.BBB$#",
+        "#BEB.OBOEBEBB$O#",
+        "#O.B.BPB.B.OB$$#",
+        "#BEBEOBO.BEBB$O#",
+        "#$.B.....B.BBB$#",
+        "#B.BBBBBBB.BB$$#",
+        "#$BBOBBBOBBBBOB#",
+        "################"
+    ],
+    // ROOM 43
+    [
+        "#O$.$.$..$.$.$O#",
+        "#$....B.PB....$#",
+        "#..BBBBBBBBBB..#",
+        "#$EBBB..EEBBB.$#",
+        "#..BOB.$$.BOB.E#",
+        "#$EBBB..EEBBB.$#",
+        "#..BBBBBBBBBB.E#",
+        "#$............$#",
+        "#O$.$.$..$.$.$O#",
+        "################"
+    ],
+    // ROOM 44
+    [
+        "#BBBPBBBOO.OOBB#",
+        "#BBBBBBBOOEBBO.#",
+        "#B.BBBB.OOEOOBB#",
+        "#BBBBBBBOO.OOOB#",
+        "#BBBOOBBOO.OE..#",
+        "#BBBOOBBOOEOBOO#",
+        "#BB.EBE.OO.O$$$#",
+        "#BOB.B.OBBEO$B$#",
+        "#BBB.B.BBO.O$$$#",
+        "################"
+    ],
+
+    // ROOM 45
+    [
+        "#$BBBBBBBBB...E#",
+        "#B.........B.B.#",
+        "#BEBB.BBBB.B.O.#",
+        "#BEBB.BBBBEB.BB#",
+        "#$...$....EB.OP#",
+        "#B.BB.BBBB.BEBB#",
+        "#B.BB.BBBB.B.O.#",
+        "#B.........B.B.#",
+        "#$BBBBBBBBB....#",
+        "################"
+    ],
+    // ROOM 46
+    [
+        "#$...O.E.EO...E#",
+        "#OBB...BB...BB.#",
+        "#.OOOOOOOBOBOBE#",
+        "#OOOOOOOOOOOOO.#",
+        "#$$$$$B..E.E.BE#",
+        "#OOOOOOOOOOOOO.#",
+        "#.OOOOOOOBOBOB.#",
+        "#OBB...BB...BB.#",
+        "#P...O....O....#",
+        "################"
+    ],
+    // ROOM 47
+    [
+        "#OOOOOOOOO.....#",
+        "#BBBBBBBOOOBBO.#",
+        "#BOOOOOBOOBE.B.#",
+        "#BOE..OBOOBEEB.#",
+        "#BOBO$OBOOB$.B.#",
+        "#BOBOOOBOOBE.B.#",
+        "#BOBBBBBOOB..B.#",
+        "#BOOOOOOB.OBBO.#",
+        "#B..E.E.B..P...#",
+        "################"
+    ],
+    // ROOM 48
+    [
+        "#.BBBBOB...EO.$#",
+        "#.BBBBBBBBBB$O$#",
+        "#EBOBBBBOBBBO..#",
+        "#EOOOOOOOOOOOOO#",
+        "#$BB.E.$$.E.B$$#",
+        "#OOOOOOOOOOOOO.#",
+        "#BBO$BBBOBBBBB.#",
+        "#BBBBBBBBBBBBBE#",
+        "#PBBBBOBE...OBE#",
+        "################"
+    ],
+    // ROOM 49
+    [
+        "#$B.B......BEB$#",
+        "#BB.B.OOOO.BEBB#",
+        "#EE.B.OOOO.B..E#",
+        "#BBBB.B..B.BBBB#",
+        "#.....B..B.....#",
+        "#BBBB.O.PO.BBBB#",
+        "#.E.B.OOOO.BEE.#",
+        "#BB.B.OOOO.B.BB#",
+        "#$BEB......B.B$#",
+        "################"
+    ],
+    // ROOM 50
+    [
+        "#E..BBBOOBBB.E.#",
+        "#$OO.BBBBBB.OO$#",
+        "#EOO.BBBBBB.OOE#",
+        "#.OO.OOOOOO.OO.#",
+        "#$OOOOOOOOOOOO$#",
+        "#.OOBOOOOOOBOO.#",
+        "#EOO.E.E....OOE#",
+        "#$OOBBBBBBBBOO$#",
+        "#PBBBBBOBBBBBBB#",
+        "################"
+    ],
+
+
 ];
 
 function expandLevelData(compactData) {
@@ -667,6 +861,8 @@ function initGame() {
     isLevelCompleted = false; 
     isLevelClearBonus = false; 
     isHighScores = false; 
+    isTitleScreen = false; 
+    isInstructionsScreen = false;
     enemies = [];
     goldRemaining = 0; 
     isGameOver = false;
@@ -728,16 +924,12 @@ function handleGameWon() {
 // --- HIGH SCORE LOGIIKKA ---
 
 function checkAndSaveHighScore() {
-    // 1. Haetaan vanhat pisteet muistista
     let savedScores = localStorage.getItem(HIGH_SCORE_KEY);
     let scores = savedScores ? JSON.parse(savedScores) : [];
 
-    // 2. Tarkistetaan mahtuuko listalle (Top 10 tai lista on vajaa)
     if (scores.length < 10 || score > scores[scores.length - 1].score) {
-        
         setTimeout(() => {
             let name = prompt("NEW PERSONAL BEST! Enter your name:", "PLAYER");
-            
             if (!name) name = "UNKNOWN";
             name = name.substring(0, 10).toUpperCase();
 
@@ -754,9 +946,220 @@ function gameLoop(timestamp, ctx) {
     const deltaTime = timestamp - lastTime;
     lastTime = timestamp;
     if (Math.floor(timestamp / 200) % 2 === 0) globalFrame = 0; else globalFrame = 1;
-    update(deltaTime);
-    draw(ctx);
+
+    // --- PÄÄLOOPIN TILAHALLINTA ---
+    if (isTitleScreen) {
+        updateTitleScreen();
+        drawTitleScreen(ctx);
+    } else if (isInstructionsScreen) {
+        updateInstructions();
+        drawInstructions(ctx);
+    } else if (isLevelSelect) {      // <--- LISÄÄ TÄMÄ EHTO
+        updateLevelSelect();         // <--- UUSI FUNKTIO
+        drawLevelSelect(ctx);        // <--- UUSI FUNKTIO
+    } else {
+        update(deltaTime);
+        draw(ctx);
+    }
+    
     requestAnimationFrame((ts) => gameLoop(ts, ctx));
+}
+
+// --- ALOITUSRUUTU ---
+
+function updateTitleScreen() {
+    // Valikon liikkuminen (0, 1, 2)
+    if (keys['ArrowUp'] || keys['KeyW']) {
+         menuSelection--;
+         if (menuSelection < 0) menuSelection = 2; // Ympäri
+         keys['ArrowUp'] = false; 
+         keys['KeyW'] = false;
+    }
+    if (keys['ArrowDown'] || keys['KeyS']) {
+         menuSelection++;
+         if (menuSelection > 2) menuSelection = 0; // Ympäri
+         keys['ArrowDown'] = false;
+         keys['KeyS'] = false;
+    }
+
+    // Valinta
+if (keys['Enter']) {
+        keys['Enter'] = false;
+        
+        if (menuSelection === 0) {
+            // ENNEN: lives = 5; score = 0; currentLevel = 0; initGame();
+            
+            // NYT: Siirrytään valitsemaan luolaa
+            isTitleScreen = false;
+            isLevelSelect = true;
+            selectedCave = 1; // Nollataan valinta ykköseen
+        } else if (menuSelection === 1) {
+            // MSX linkki
+            window.location.href = "https://minermachine.net/msx";
+        } else if (menuSelection === 2) {
+            // Mene ohjeisiin
+            isTitleScreen = false;
+            isInstructionsScreen = true;
+        }
+    }
+}
+
+function drawTitleScreen(ctx) {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // LOGOT
+    drawTile(ctx, 176, 64, 64);      // T
+    drawTile(ctx, 177, 64+16, 64);   // W
+    drawTile(ctx, 184, 64, 64+16);   // 19
+    drawTile(ctx, 185, 64+16, 64+16);// 86
+
+    drawTile(ctx, 168, 416, 64);     // MS Vasen Ylä
+    drawTile(ctx, 60,  416+16, 64);  // MS Oikea Ylä
+    drawTile(ctx, 169, 416, 64+16);  // MS Vasen Ala
+    drawTile(ctx, 61,  416+16, 64+16);// MS Oikea Ala
+
+    // TEKSTIT
+    ctx.textAlign = "center";
+    ctx.font = "32px monospace";
+    ctx.fillStyle = "#00EE00"; 
+    ctx.fillText("MINER MACHINE", SCREEN_WIDTH / 2, 80);
+
+    ctx.font = "24px monospace";
+    ctx.fillText("MSX", SCREEN_WIDTH / 2, 120);
+
+    ctx.font = "16px monospace";
+    ctx.fillStyle = "#00EEEE"; 
+    ctx.fillText("ORIGINAL CREATED (C) 1986 BY", SCREEN_WIDTH / 2, 160);
+    ctx.fillText("TERO WECKROTH & MIKA SAVOLAINEN", SCREEN_WIDTH / 2, 180);
+    ctx.fillText("HTML-VERSION BY AI & MIKA SAVOLAINEN", SCREEN_WIDTH / 2, 200);
+
+    // VALIKKO
+    const menuY = 240;
+    const spacing = 35;
+    ctx.font = "20px monospace";
+    
+    function drawMenuItem(text, index) {
+        if (menuSelection === index) {
+            ctx.fillStyle = "#FFFF00"; 
+            ctx.fillText("> " + text + " <", SCREEN_WIDTH / 2, menuY + (index * spacing));
+        } else {
+            ctx.fillStyle = "#FFFFFF"; 
+            ctx.fillText("  " + text + "  ", SCREEN_WIDTH / 2, menuY + (index * spacing));
+        }
+    }
+
+    drawMenuItem("NEW HTML5-VERSION", 0);
+    drawMenuItem("ORIGINAL MSX-VERSION", 1);
+    drawMenuItem("INSTRUCTIONS / OHJEET", 2); // Uusi valinta
+
+    ctx.textAlign = "start"; 
+}
+
+// --- OHJERUUTU (UUSI) ---
+
+function updateInstructions() {
+    if (keys['Enter'] || keys['Escape']) {
+        keys['Enter'] = false;
+        keys['Escape'] = false;
+        isInstructionsScreen = false;
+        isTitleScreen = true; // Palaa valikkoon
+    }
+}
+
+function drawInstructions(ctx) {
+    // Tyhjennetään tausta mustaksi
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // --- VASEN PUOLI: TEKSTIT ---
+    // Asetetaan vasen marginaali ja aloitusy
+    let x = 10; 
+    let y = 30;
+    
+    // Pienennetään riviväliä, jotta kaikki mahtuu
+    const lineHeight = 14; 
+
+    // PÄÄOTSIKKO
+    ctx.font = "bold 20px monospace";
+    ctx.fillStyle = "#FFFF00"; // Keltainen
+    ctx.textAlign = "left";
+    ctx.fillText("HOW TO PLAY", x, y); 
+    y += 30; // Iso väli otsikon jälkeen
+
+    // CONTROLS
+    ctx.font = "bold 14px monospace";
+    ctx.fillStyle = "#00EEEE"; // Syaani
+    ctx.fillText("CONTROLS:", x, y); 
+    y += 20;
+
+    // Leipäteksti (Pienennetty fontti 10px tai 11px)
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "#FFFFFF"; 
+    
+    ctx.fillText("- Arrow keys to move.", x, y); y += lineHeight;
+    ctx.fillText("- Hold SPACE + Arrow to", x, y); y += lineHeight;
+    ctx.fillText("  push stones safely.", x, y); y += lineHeight * 1.5;
+
+    // GOAL
+    ctx.font = "bold 14px monospace";
+    ctx.fillStyle = "#00EEEE";
+    ctx.fillText("GOAL:", x, y); 
+    y += 20;
+
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "#FFFFFF"; 
+    ctx.fillText("- Collect ALL gold ingots", x, y); y += lineHeight;
+    ctx.fillText("  to open the next level.", x, y); y += lineHeight;
+    ctx.fillText("- Watch out for bats!", x, y); y += lineHeight;
+    ctx.fillText("- Kill bats by pushing", x, y); y += lineHeight;
+    ctx.fillText("  stones onto them.", x, y); y += lineHeight * 1.5;
+
+    // SCORING
+    ctx.font = "bold 14px monospace";
+    ctx.fillStyle = "#00EEEE";
+    ctx.fillText("SCORING:", x, y); 
+    y += 20;
+
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "#FFFFFF"; 
+    ctx.fillText("Ingot  = Room Number pts", x, y); y += lineHeight;
+    ctx.fillText("Bat    = 4 pts", x, y); y += lineHeight;
+    ctx.fillText("Cave Clear = 5000 pts + 1 live", x, y); y += lineHeight;
+    y += 20;
+    // ROOMS PER CAVE
+    ctx.font = "bold 14px monospace";
+    ctx.fillStyle = "#00EEEE";
+    ctx.fillText("ROOMS PER CAVE:", x, y); 
+    y += 20;
+
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "#FFFFFF"; 
+    ctx.fillText("HTML: 5 CAVES, 10 ROOMS PER CAVE", x, y); y += lineHeight;
+    ctx.fillText("MSX: 2 CAVES, 25 ROOMS PER CAVE", x, y); y += lineHeight;
+    
+
+    // --- OIKEA PUOLI: KUVA ---
+    if (manualImg.complete && manualImg.naturalWidth > 0) {
+        // Laske X-koordinaatti niin, että kuva on oikeassa reunassa
+        // Emme määritä leveyttä/korkeutta (width, height), jotta kuva EI skaalaudu
+        // Vaan se piirretään pikselilleen oikein.
+        
+        // Jos kuva on leveä, siirretään sitä hieman vasemmalle ruudun keskeltä
+        // Voit säätää lukua 220 jos kuva menee tekstin päälle
+        let imgX = 220; 
+        let imgY = 20;
+
+        ctx.drawImage(manualImg, imgX, imgY);
+    }
+
+    // --- ALAREUNAN TEKSTI ---
+    ctx.font = "bold 16px monospace";
+    ctx.fillStyle = "#00FF00";
+    ctx.textAlign = "center";
+    // Piirretään aivan alas keskelle
+    ctx.fillText("PRESS ENTER TO RETURN", SCREEN_WIDTH / 2, SCREEN_HEIGHT - 15);
+    ctx.textAlign = "start"; // Palautetaan tasaus oletukseksi
 }
 
 function update(deltaTime) {
@@ -766,11 +1169,10 @@ function update(deltaTime) {
              keys['Enter'] = false; 
              
              if (isHighScores) {
-                 lives = 5; score = 0; currentLevel = 0; 
+                 isTitleScreen = true; // High scoren jälkeen palataan alkuun
                  isHighScores = false;
                  isGameOver = false;
                  isGameWon = false;
-                 initGame();
                  return;
              }
 
@@ -781,16 +1183,12 @@ function update(deltaTime) {
              }
 
              if (isLevelCompleted) {
-                 // --- UUSI LOGIIKKA: TARKISTETAAN LUOLAN VAIHTUMINEN ---
-                 // Jos seuraava taso aloittaa uuden luolan (eli nykyinen + 1 on jaollinen 25:llä)
-                 // Esim. ollaan tasolla 24 (Room 25) -> 24+1 = 25 -> Jaollinen!
                  if ((currentLevel + 1) % ROOMS_PER_CAVE === 0) {
-                     score += 5000;  // 5000 lisäpistettä
-                     lives++;        // 1 lisäelämä
-                     playSound('score'); // Äänimerkki palkinnosta
+                     score += 5000;  
+                     lives++;        
+                     playSound('score'); 
                      console.log("CAVE COMPLETED! Bonus 5000pts + 1 Life");
                  }
-
                  currentLevel++;
                  gameTime = INITIAL_TIME; 
                  initGame();
@@ -798,7 +1196,6 @@ function update(deltaTime) {
         }
         return;
     }
-
 
     // BONUSLASKENTA
     if (isLevelClearBonus) {
@@ -857,47 +1254,31 @@ function update(deltaTime) {
         }
     }
 
-// KIVET
+    // KIVET
     for (let i = movingStones.length - 1; i >= 0; i--) {
         let stone = movingStones[i];
         stone.x += stone.vx;
         stone.y += stone.vy;
         let stoneStopped = false;
 
-        // --- KORJATTU TÖRMÄYS: KESKIPISTE-ETÄISYYS (VARMIN TAPA) ---
+        // --- KORJATTU TÖRMÄYS: KESKIPISTE-ETÄISYYS ---
         for (let e = enemies.length - 1; e >= 0; e--) {
             let enemy = enemies[e];
-
-            // 1. Lasketaan molempien keskipisteet
             let sCX = stone.x + 16;
             let sCY = stone.y + 16;
             let eCX = enemy.x + 16;
             let eCY = enemy.y + 16;
-
-            // 2. Lasketaan etäisyys (itseisarvo)
             let dx = Math.abs(sCX - eCX);
             let dy = Math.abs(sCY - eCY);
-
-            // 3. OSUMAEHTO
-            // HIT_DIST: Kuinka lähellä keskipisteiden pitää olla.
-            // 32 tarkoittaa, että reunat koskettavat.
-            // 28 tarkoittaa, että 4 pikselin päällekkäisyys riittää tappoon.
-            // Tämä estää "jumiin jäämisen" reunalla.
             const HIT_DIST = 28; 
 
             if (dx < HIT_DIST && dy < HIT_DIST) {
-                
-                // OSUMA!
                 playSound('explosion');
                 explosions.push({ x: enemy.x, y: enemy.y, frame: 0, timer: 0 });
                 enemies.splice(e, 1); 
-                
-                score += 4; // 4 PISTETTÄ
-                
-                // Pysäytetään kivi ja kohdistetaan ruudukkoon
+                score += 4; 
                 stone.x = Math.round(stone.x / 32) * 32;
                 stone.y = Math.round(stone.y / 32) * 32;
-
                 placeBigTileObject(stone.x / TILE_SIZE, stone.y / TILE_SIZE, 128);
                 movingStones.splice(i, 1);
                 stoneStopped = true;
@@ -907,14 +1288,12 @@ function update(deltaTime) {
         
         if (stoneStopped) continue;
 
-        // Kiven pysähtyminen seiniin/maahan (Pysyy samana)
         if (stone.x % 16 === 0 && stone.y % 16 === 0) {
             let tx = stone.x / TILE_SIZE;
             let ty = stone.y / TILE_SIZE;
             let nextTx = tx; let nextTy = ty;
             if (stone.vx > 0) nextTx += 2; else if (stone.vx < 0) nextTx -= 1;
             if (stone.vy > 0) nextTy += 2; else if (stone.vy < 0) nextTy -= 1;
-
             if (checkCollisionForStone(nextTx, nextTy)) {
                 placeBigTileObject(tx, ty, 128);
                 movingStones.splice(i, 1);
@@ -1151,21 +1530,17 @@ function draw(ctx) {
 
     // --- RUUTUTILA: PERSONAL BEST SCORES ---
     if (isHighScores) {
-        // Tumma tausta
         ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         
-        ctx.fillStyle = "#FFFF00"; // Keltainen otsikko
+        ctx.fillStyle = "#FFFF00"; 
         ctx.textAlign = "center";
         ctx.font = "32px monospace";
-        // --- MUUTOS TÄSSÄ ---
         ctx.fillText("PERSONAL BEST SCORES", SCREEN_WIDTH / 2, 60);
 
-        // Hae pisteet
         let savedScores = localStorage.getItem(HIGH_SCORE_KEY);
         let scores = savedScores ? JSON.parse(savedScores) : [];
 
-        // Piirrä lista
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "20px monospace";
         let startY = 120;
@@ -1176,7 +1551,6 @@ function draw(ctx) {
             for (let i = 0; i < scores.length; i++) {
                 let s = scores[i];
                 let rank = (i + 1) + ".";
-                // Asemointi: Sija - Nimi - Pisteet
                 ctx.textAlign = "right";
                 ctx.fillText(rank, 160, startY + (i * 24));
                 
@@ -1191,7 +1565,7 @@ function draw(ctx) {
         ctx.textAlign = "center";
         ctx.fillStyle = "#00FF00";
         ctx.fillText("PRESS ENTER TO RESTART", SCREEN_WIDTH / 2, 360);
-        ctx.textAlign = "start"; // Palauta oletus
+        ctx.textAlign = "start"; 
         return; 
     }
 
@@ -1264,60 +1638,34 @@ function checkDigging() {
 function tryPushStone(targetPixelX, targetPixelY, pushDx, pushDy) {
     const tx = Math.floor((targetPixelX + 8) / TILE_SIZE);
     const ty = Math.floor((targetPixelY + 8) / TILE_SIZE);
-    
     if (ty < 0 || ty >= 24 || tx < 0 || tx >= 32) return;
     if (!map[ty]) return;
-    
     const tileID = map[ty][tx];
-    
-    // Tarkistetaan onko kyseessä kivi (ID 128-131)
     if (tileID >= 128 && tileID <= 131) {
         let stoneTx = tx;
         let stoneTy = ty;
-        
-        // Säädetään koordinaatit kiven vasempaan yläkulmaan
         if (tileID === 129 || tileID === 131) stoneTx -= 1;
         if (tileID === 130 || tileID === 131) stoneTy -= 1;
-        
-        // Lasketaan kiven nykyinen pikselisijainti
         let currentStoneX = stoneTx * TILE_SIZE;
         let currentStoneY = stoneTy * TILE_SIZE;
-
-        // Lasketaan MINNE kivi olisi menossa (32px suuntaan)
         let destX = currentStoneX;
         let destY = currentStoneY;
-        
-        if (pushDx > 0) destX += 32; 
-        else if (pushDx < 0) destX -= 32;
-        
-        if (pushDy > 0) destY += 32; 
-        else if (pushDy < 0) destY -= 32;
-
-        // --- UUSI TARKISTUS: ONKO MÄÄRÄNPÄÄSSÄ VIHOLLINEN? ---
+        if (pushDx > 0) destX += 32; else if (pushDx < 0) destX -= 32;
+        if (pushDy > 0) destY += 32; else if (pushDy < 0) destY -= 32;
         for (let enemy of enemies) {
-            // Jos vihollinen on kiven määränpäässä (tai hyvin lähellä sitä)
             if (Math.abs(enemy.x - destX) < 28 && Math.abs(enemy.y - destY) < 28) {
-                return; // ESTÄ TYÖNTÖ! Kivi toimii kuin seinä.
+                return; 
             }
         }
-
-        // --- TARKISTETAAN SEINÄT JA MAASTO ---
         let destTx = stoneTx;
         let destTy = stoneTy;
         if (pushDx > 0) destTx += 2; if (pushDx < 0) destTx -= 1;
         if (pushDy > 0) destTy += 2; if (pushDy < 0) destTy -= 1;
-
-        // Jos tila on vapaa (ei seinää, ei toista kiveä), aloitetaan liike
         if (!checkCollisionForStone(destTx, destTy) && !checkCollisionForStone(destTx + (pushDx?0:1), destTy + (pushDy?0:1))) {
-            
-            // Tyhjennetään vanha paikka kartasta
             map[stoneTy][stoneTx] = TILE_EMPTY; map[stoneTy][stoneTx+1] = TILE_EMPTY;
             map[stoneTy+1][stoneTx] = TILE_EMPTY; map[stoneTy+1][stoneTx+1] = TILE_EMPTY;
-            
-            // Lisätään liikkuviin kiviin
             movingStones.push({ x: currentStoneX, y: currentStoneY, vx: Math.sign(pushDx) * 4, vy: Math.sign(pushDy) * 4 });
-            
-            player.moveLockTimer = 10; 
+            player.moveLockTimer = 10;
         }
     }
 }
@@ -1335,23 +1683,13 @@ function checkGold() {
     const tx = Math.floor(centerX / TILE_SIZE);
     const ty = Math.floor(centerY / TILE_SIZE);
     const tileID = map[ty][tx];
-
     if (tileID >= 160 && tileID <= 163) {
-        // --- MUUTOS: PISTEET HUONEEN NUMERON MUKAAN ---
-        // Lasketaan huoneen numero (1-25)
         const points = (currentLevel % ROOMS_PER_CAVE) + 1;
-        
-        score += points; // Lisätään huoneen numero pisteisiin
-        
-        playSound('gold'); 
-        goldRemaining--;
-
+        score += points; 
+        playSound('gold'); goldRemaining--;
         if (goldRemaining <= 0) isLevelClearBonus = true; 
-        
         let goldTx = tx; let goldTy = ty;
-        if (tileID === 161 || tileID === 163) goldTx -= 1; 
-        if (tileID === 162 || tileID === 163) goldTy -= 1; 
-        
+        if (tileID === 161 || tileID === 163) goldTx -= 1; if (tileID === 162 || tileID === 163) goldTy -= 1; 
         map[goldTy][goldTx] = TILE_EMPTY; map[goldTy][goldTx+1] = TILE_EMPTY;
         map[goldTy+1][goldTx] = TILE_EMPTY; map[goldTy+1][goldTx+1] = TILE_EMPTY;
     }
@@ -1367,4 +1705,61 @@ function playerDie() {
 function handleGameOver(reason) {
     isGameOver = true;
     console.log("GAME OVER: " + reason);
+}
+
+// --- LEVEL SELECT (UUSI) ---
+
+function updateLevelSelect() {
+    // Nuolinäppäimet muuttavat numeroa
+    if (keys['ArrowUp'] || keys['KeyW'] || keys['ArrowRight'] || keys['KeyD']) {
+        selectedCave++;
+        if (selectedCave > 5) selectedCave = 1; // Ympäri 5 -> 1
+        keys['ArrowUp'] = false; keys['KeyW'] = false;
+        keys['ArrowRight'] = false; keys['KeyD'] = false;
+    }
+    if (keys['ArrowDown'] || keys['KeyS'] || keys['ArrowLeft'] || keys['KeyA']) {
+        selectedCave--;
+        if (selectedCave < 1) selectedCave = 5; // Ympäri 1 -> 5
+        keys['ArrowDown'] = false; keys['KeyS'] = false;
+        keys['ArrowLeft'] = false; keys['KeyA'] = false;
+    }
+
+    // Enter aloittaa pelin valitusta luolasta
+    if (keys['Enter']) {
+        keys['Enter'] = false;
+        isLevelSelect = false;
+        
+        // Alustetaan peli
+        lives = 5; 
+        score = 0; 
+        
+        // LASKETAAN ALKUKENTTÄ:
+        currentLevel = (selectedCave - 1) * ROOMS_PER_CAVE; 
+        //currentLevel = 49
+        initGame();
+    }
+}
+
+function drawLevelSelect(ctx) {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    ctx.textAlign = "center";
+    
+    // Otsikko
+    ctx.font = "bold 24px monospace";
+    ctx.fillStyle = "#00EEEE";
+    ctx.fillText("SELECT STARTING CAVE", SCREEN_WIDTH / 2, 120);
+
+    // Valinta
+    ctx.font = "bold 48px monospace";
+    ctx.fillStyle = "#FFFF00";
+    ctx.fillText("< CAVE " + selectedCave + " >", SCREEN_WIDTH / 2, 200);
+
+    // Ohje
+    ctx.font = "16px monospace";
+    ctx.fillStyle = "#00FF00";
+    ctx.fillText("PRESS ENTER TO START", SCREEN_WIDTH / 2, 300);
+
+    ctx.textAlign = "start";
 }
