@@ -36,6 +36,8 @@ let goldRemaining = 0;
 let isTitleScreen = true;  
 let isLevelSelect = false; 
 let isInstructionsScreen = false; // UUSI: Ohjeruutu-tila
+let isMsxMenu = false;       // <--- UUSI: Tila MSX-valikolle
+let msxMenuSelection = 0;    // <--- UUSI: Valinnan seuranta
 let menuSelection = 0;      // 0=HTML5, 1=MSX, 2=INSTRUCTIONS
 let isGameOver = false; 
 let isGameWon = false;      
@@ -947,21 +949,23 @@ function gameLoop(timestamp, ctx) {
     lastTime = timestamp;
     if (Math.floor(timestamp / 200) % 2 === 0) globalFrame = 0; else globalFrame = 1;
 
-    // --- PÄÄLOOPIN TILAHALLINTA ---
+// --- PÄÄLOOPIN TILAHALLINTA ---
     if (isTitleScreen) {
         updateTitleScreen();
         drawTitleScreen(ctx);
     } else if (isInstructionsScreen) {
         updateInstructions();
         drawInstructions(ctx);
-    } else if (isLevelSelect) {      // <--- LISÄÄ TÄMÄ EHTO
-        updateLevelSelect();         // <--- UUSI FUNKTIO
-        drawLevelSelect(ctx);        // <--- UUSI FUNKTIO
+    } else if (isLevelSelect) {
+        updateLevelSelect();
+        drawLevelSelect(ctx);
+    } else if (isMsxMenu) {          // <--- LISÄÄ TÄMÄ EHTO
+        updateMsxMenu();             // <--- UUSI FUNKTIO
+        drawMsxMenu(ctx);            // <--- UUSI FUNKTIO
     } else {
         update(deltaTime);
         draw(ctx);
-    }
-    
+    }    
     requestAnimationFrame((ts) => gameLoop(ts, ctx));
 }
 
@@ -994,8 +998,9 @@ if (keys['Enter']) {
             isLevelSelect = true;
             selectedCave = 1; // Nollataan valinta ykköseen
         } else if (menuSelection === 1) {
-            // MSX linkki
-            window.location.href = "https://minermachine.net/msx";
+	    isTitleScreen = false;
+            isMsxMenu = true;
+            msxMenuSelection = 0;
         } else if (menuSelection === 2) {
             // Mene ohjeisiin
             isTitleScreen = false;
@@ -1760,6 +1765,94 @@ function drawLevelSelect(ctx) {
     ctx.font = "16px monospace";
     ctx.fillStyle = "#00FF00";
     ctx.fillText("PRESS ENTER TO START", SCREEN_WIDTH / 2, 300);
+
+    ctx.textAlign = "start";
+}
+
+// --- MSX GAME SELECT (UUSI) ---
+
+function updateMsxMenu() {
+    // Nuolinäppäimet
+    if (keys['ArrowUp'] || keys['KeyW']) {
+        msxMenuSelection--;
+        if (msxMenuSelection < 0) msxMenuSelection = 2; // Ympäri (3 peliä: 0, 1, 2)
+        keys['ArrowUp'] = false; keys['KeyW'] = false;
+    }
+    if (keys['ArrowDown'] || keys['KeyS']) {
+        msxMenuSelection++;
+        if (msxMenuSelection > 2) msxMenuSelection = 0; // Ympäri
+        keys['ArrowDown'] = false; keys['KeyS'] = false;
+    }
+
+    // ESC palaa päävalikkoon
+    if (keys['Escape']) {
+        keys['Escape'] = false;
+        isMsxMenu = false;
+        isTitleScreen = true;
+    }
+
+    // ENTER valitsee pelin ja avaa linkin
+    if (keys['Enter']) {
+        keys['Enter'] = false;
+        
+        if (msxMenuSelection === 0) {
+            // Peli 1: Miner Machine
+            window.location.href = "https://minermachine.net/msx";
+        } 
+        else if (msxMenuSelection === 1) {
+            // Peli 2: MUOKKAA TÄHÄN LINKKI
+            window.location.href = "https://webmsx.org/?tape=https://github.com/savolmika-source/MinerMachine/raw/refs/heads/main/roller/MSX%20Roller.cas"; 
+        } 
+        else if (msxMenuSelection === 2) {
+            // Peli 3: MUOKKAA TÄHÄN LINKKI
+            window.location.href = "https://webmsx.org/?tape=https://github.com/savolmika-source/MinerMachine/raw/refs/heads/main/tank/MSX%20Tank2.cas"; 
+        }
+    }
+}
+
+function drawMsxMenu(ctx) {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    ctx.textAlign = "center";
+    
+    // Otsikko
+    ctx.font = "bold 24px monospace";
+    ctx.fillStyle = "#00EEEE";
+    ctx.fillText("SELECT MSX GAME", SCREEN_WIDTH / 2, 80);
+
+    // Ohje
+    ctx.font = "14px monospace";
+    ctx.fillStyle = "#AAAAAA";
+    ctx.fillText("ARROW KEYS TO SELECT, ENTER TO PLAY", SCREEN_WIDTH / 2, 110);
+
+    // Valinnat
+    const startY = 180;
+    const spacing = 40;
+    ctx.font = "20px monospace";
+
+    // Määritellään pelien nimet
+    // MUOKKAA NÄMÄ NIMET OIKEIKSI
+    const games = [
+        "MINER MACHINE",
+        "ROLLER",  
+        "TANK"   
+    ];
+
+    for (let i = 0; i < games.length; i++) {
+        if (msxMenuSelection === i) {
+            ctx.fillStyle = "#FFFF00"; // Valittu on keltainen
+            ctx.fillText("> " + games[i] + " <", SCREEN_WIDTH / 2, startY + (i * spacing));
+        } else {
+            ctx.fillStyle = "#FFFFFF"; // Muut valkoisia
+            ctx.fillText(games[i], SCREEN_WIDTH / 2, startY + (i * spacing));
+        }
+    }
+
+    // Alareuna
+    ctx.fillStyle = "#00FF00";
+    ctx.font = "16px monospace";
+    ctx.fillText("PRESS ESC TO RETURN", SCREEN_WIDTH / 2, 340);
 
     ctx.textAlign = "start";
 }
