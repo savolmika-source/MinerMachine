@@ -1800,11 +1800,11 @@ function updateMsxMenu() {
             window.location.href = "https://minermachine.net/msx";
         } 
         else if (msxMenuSelection === 1) {
-            // Peli 2: MUOKKAA TÄHÄN LINKKI
+            // Peli 2: ROLLER
             window.location.href = "https://webmsx.org/?MACHINE=MSX1e&P=RAM64,NODISK&tape=https://github.com/savolmika-source/MinerMachine/raw/refs/heads/main/roller/MSX%20Roller.cas"; 
         } 
         else if (msxMenuSelection === 2) {
-            // Peli 3: MUOKKAA TÄHÄN LINKKI
+            // Peli 3: TANK
             window.location.href = "https://webmsx.org/?tape=https://github.com/savolmika-source/MinerMachine/raw/refs/heads/main/tank/MSX%20Tank2.cas"; 
         }
     }
@@ -1832,11 +1832,10 @@ function drawMsxMenu(ctx) {
     ctx.font = "20px monospace";
 
     // Määritellään pelien nimet
-    // MUOKKAA NÄMÄ NIMET OIKEIKSI
     const games = [
-        "MINER MACHINE",
-        "ROLLER",  
-        "TANK"   
+        "MINER MACHINE (1986)",
+        "ROLLER (1987)",  
+        "TANK (1986)"   
     ];
 
     for (let i = 0; i < games.length; i++) {
