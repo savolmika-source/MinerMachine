@@ -1801,7 +1801,7 @@ function updateMsxMenu() {
         } 
         else if (msxMenuSelection === 1) {
             // Peli 2: MUOKKAA TÄHÄN LINKKI
-            window.location.href = "https://webmsx.org/?tape=https://github.com/savolmika-source/MinerMachine/raw/refs/heads/main/roller/MSX%20Roller.cas"; 
+            window.location.href = "https://webmsx.org/?MACHINE=MSX1e&P=RAM64,NODISK&tape=https://github.com/savolmika-source/MinerMachine/raw/refs/heads/main/roller/MSX%20Roller.cas"; 
         } 
         else if (msxMenuSelection === 2) {
             // Peli 3: MUOKKAA TÄHÄN LINKKI
