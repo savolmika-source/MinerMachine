@@ -1037,7 +1037,7 @@ function drawTitleScreen(ctx) {
     ctx.fillStyle = "#00EEEE"; 
     ctx.fillText("ORIGINAL CREATED (C) 1986 BY", SCREEN_WIDTH / 2, 160);
     ctx.fillText("TERO WECKROTH & MIKA SAVOLAINEN", SCREEN_WIDTH / 2, 180);
-    ctx.fillText("HTML-VERSION BY AI & MIKA SAVOLAINEN", SCREEN_WIDTH / 2, 200);
+    ctx.fillText("HTML-VERSION BY AI & MIKA S", SCREEN_WIDTH / 2, 200);
 
     // VALIKKO
     const menuY = 240;
@@ -1056,7 +1056,7 @@ function drawTitleScreen(ctx) {
 
     drawMenuItem("NEW HTML5-VERSION", 0);
     drawMenuItem("ORIGINAL MSX-VERSION", 1);
-    drawMenuItem("INSTRUCTIONS / OHJEET", 2); // Uusi valinta
+    drawMenuItem("INSTRUCTIONS", 2); // Uusi valinta
 
     ctx.textAlign = "start"; 
 }
