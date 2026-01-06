@@ -1797,15 +1797,15 @@ function updateMsxMenu() {
         
         if (msxMenuSelection === 0) {
             // Peli 1: Miner Machine
-            window.location.href = "https://minermachine.net/msx";
+            window.location.href = "https://webmsx.org/?diska=https://minermachine.net/msx/MinerMachineAuto.dsk";
         } 
         else if (msxMenuSelection === 1) {
             // Peli 2: ROLLER
-            window.location.href = "https://webmsx.org/?MACHINE=MSX1e&P=RAM64,NODISK&tape=https://github.com/savolmika-source/MinerMachine/raw/refs/heads/main/roller/MSX%20Roller.cas"; 
+            window.location.href = "https://webmsx.org/?MACHINE=MSX1e&P=RAM64,NODISK&tape=https://minermachine.net/roller/MSX%20Roller.cas"; 
         } 
         else if (msxMenuSelection === 2) {
             // Peli 3: TANK
-            window.location.href = "https://webmsx.org/?tape=https://github.com/savolmika-source/MinerMachine/raw/refs/heads/main/tank/MSX%20Tank2.cas"; 
+            window.location.href = "https://webmsx.org/?tape=https://minermachine.net/tank/MSX%20Tank2.cas"; 
         }
     }
 }
